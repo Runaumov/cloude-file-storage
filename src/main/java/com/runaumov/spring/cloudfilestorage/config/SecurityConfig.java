@@ -32,17 +32,17 @@ public class SecurityConfig {
         return NoOpPasswordEncoder.getInstance();
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public AuthenticationProvider authenticationProvider(UserEntityDetailService userEntityDetailService) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userEntityDetailService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
+//    @Bean
+//    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+//        return config.getAuthenticationManager();
+//    }
+//
+//    @Bean
+//    public AuthenticationProvider authenticationProvider(UserEntityDetailService userEntityDetailService) {
+//        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userEntityDetailService);
+//        provider.setPasswordEncoder(passwordEncoder());
+//        return provider;
+//    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
