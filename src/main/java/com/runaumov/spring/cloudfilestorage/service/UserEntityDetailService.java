@@ -4,8 +4,6 @@ import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
 import com.runaumov.spring.cloudfilestorage.repository.UserRepository;
 import com.runaumov.spring.cloudfilestorage.security.UserEntityDetails;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
