@@ -4,7 +4,6 @@ import com.runaumov.spring.cloudfilestorage.dto.UserEntityRequestDto;
 import com.runaumov.spring.cloudfilestorage.dto.UserEntityResponseDto;
 import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
 import org.mapstruct.Mapper;
-import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
 public interface UserEntityMapper {
