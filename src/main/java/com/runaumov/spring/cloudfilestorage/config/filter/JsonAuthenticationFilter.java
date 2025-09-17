@@ -3,6 +3,7 @@ package com.runaumov.spring.cloudfilestorage.config.filter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
+import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,17 +14,12 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StreamUtils;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 public class JsonAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
@@ -32,30 +28,12 @@ public class JsonAuthenticationFilter extends AbstractAuthenticationProcessingFi
     public JsonAuthenticationFilter(RequestMatcher requestMatcher, AuthenticationManager authenticationManager) {
         super(requestMatcher);
         setAuthenticationManager(authenticationManager);
-
-        setAuthenticationSuccessHandler(((request, response, authentication) -> {
-            SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(authentication);
-            SecurityContextHolder.setContext(context);
-
-            HttpSession session = request.getSession(true);
-            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
-
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"username\":\"" + authentication.getName() + "\"}");
-        }));
-
-        setAuthenticationFailureHandler(((request, response, exception) -> {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        }));
     }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
         try {
             byte[] bytes = StreamUtils.copyToByteArray(request.getInputStream());
-            String line = new String(bytes, StandardCharsets.UTF_8);
 
             JsonNode root = objectMapper.readTree(bytes);
             String username = root.path("username").asText("");
@@ -74,4 +52,21 @@ public class JsonAuthenticationFilter extends AbstractAuthenticationProcessingFi
         }
     }
 
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+        SecurityContextHolder.getContext().setAuthentication(authResult);
+        request.getSession(true).setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                SecurityContextHolder.getContext()
+        );
+
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"username\":\"" + authResult.getName() + "\"}");
+    }
+
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    }
 }
