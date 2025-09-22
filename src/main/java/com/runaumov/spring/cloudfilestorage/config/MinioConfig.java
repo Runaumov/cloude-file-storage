@@ -2,6 +2,7 @@ package com.runaumov.spring.cloudfilestorage.config;
 
 import io.minio.MinioClient;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -13,14 +14,12 @@ public class MinioConfig {
     private String login;
     @Value("${minio.password}")
     private String password;
-    @Value("${minio.bucket}")
-    private String bucket;
 
+    @Bean
     public MinioClient minioClient() {
         return MinioClient.builder()
                 .endpoint(url)
                 .credentials(login, password)
                 .build();
     }
-
 }
