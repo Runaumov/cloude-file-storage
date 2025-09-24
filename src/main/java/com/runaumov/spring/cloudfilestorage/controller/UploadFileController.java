@@ -13,8 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @Controller
-@RequestMapping("/resource")
 @RequiredArgsConstructor
+@RequestMapping("/resource")
 public class UploadFileController {
 
     private final UploadFileService uploadFilesService;
