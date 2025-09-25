@@ -26,7 +26,7 @@ public class DirectoryController {
 
     @PostMapping
     public ResponseEntity<ResourceResponseDto> createEmptyDirectory(@RequestParam String path) {
-        return null;
+        return ResponseEntity.ok(directoryService.createEmptyDirectory(path));
     }
 
 }
