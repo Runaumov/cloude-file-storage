@@ -7,10 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
@@ -21,6 +18,7 @@ public class ResourceController {
 
     private final UploadFileService uploadFilesService;
     private final ResourceInfoService resourceInfoService;
+    private final ResourceDeleteService resourceDeleteService;
 
     @GetMapping
     public ResponseEntity<ResourceResponseDto> getResourceInfo(@RequestParam String path) {
@@ -34,5 +32,11 @@ public class ResourceController {
     ) {
         List<ResourceResponseDto> uploadFiles = uploadFilesService.uploadFiles(path, files);
         return ResponseEntity.status(HttpStatus.CREATED).body(uploadFiles);
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> deleteResource(@RequestParam String path) {
+        return resourceDeleteService.deleteResource(path);
     }
 }
