@@ -1,6 +1,7 @@
 package com.runaumov.spring.cloudfilestorage.controller;
 
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
+import com.runaumov.spring.cloudfilestorage.service.ResourceDeleteService;
 import com.runaumov.spring.cloudfilestorage.service.ResourceInfoService;
 import com.runaumov.spring.cloudfilestorage.service.UploadFileService;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ public class ResourceController {
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> deleteResource(@RequestParam String path) {
-        return resourceDeleteService.deleteResource(path);
+    public void deleteResource(@RequestParam String path) {
+        resourceDeleteService.deleteResource(path);
     }
 }
