@@ -19,6 +19,5 @@ public class ResourceMoveController {
     @GetMapping
     public ResponseEntity<ResourceResponseDto> moveResource(@RequestParam("from") String from, @RequestParam("to") String to) {
         return ResponseEntity.ok(resourceMoveService.resourceMove(from, to));
-
     }
 }
