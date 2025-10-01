@@ -5,6 +5,7 @@ import com.runaumov.spring.cloudfilestorage.service.ResourceSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -15,6 +16,7 @@ public class ResourceSearchController {
 
     private final ResourceSearchService resourceSearchService;
 
+    @GetMapping
     public ResponseEntity<ResourceResponseDto> searchResource(@RequestParam String query) {
         return ResponseEntity.ok(resourceSearchService.searchResource(query));
     }
