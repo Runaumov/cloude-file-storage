@@ -15,9 +15,9 @@ public class ResourceMoveService {
     private String bucketName;
 
     public ResourceResponseDto resourceMove(String from, String to) {
-        String name = from.contains("/")
-                ? from.substring(from.lastIndexOf("/") + 1)
-                : from;
+        String name = to.contains("/")
+                ? to.substring(to.lastIndexOf("/") + 1)
+                : to;
 
         try {
             minioClient.copyObject(CopyObjectArgs.builder()
@@ -39,8 +39,11 @@ public class ResourceMoveService {
                     .object(to)
                     .build());
 
+            int lastSlash = to.lastIndexOf('/');
+            String parentPath = (lastSlash == -1) ? "" : to.substring(0, lastSlash + 1);
+
             ResourceResponseDto resourceResponseDto = new ResourceResponseDto();
-            resourceResponseDto.setPath(from);
+            resourceResponseDto.setPath(parentPath);
             resourceResponseDto.setName(name);
             resourceResponseDto.setSize(statObject.size());
             resourceResponseDto.setType("FILE");

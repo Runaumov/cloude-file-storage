@@ -21,8 +21,8 @@ public class ResourceInfoServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void getResourceInfo_returnCorrectDto_forFileInRoot() throws Exception {
-        String objectPath = "file-in-root.txt";
+    void shouldGetResourceResponseDto_whenFileExist() throws Exception {
+        String objectPath = "file.txt";
         byte[] content = "test".getBytes(StandardCharsets.UTF_8);
 
         try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(content)) {
@@ -39,7 +39,7 @@ public class ResourceInfoServiceTest extends AbstractServiceTest {
         ResourceResponseDto dto = resourceInfoService.getResourceInfo(objectPath);
 
         Assertions.assertEquals("", dto.getPath());
-        Assertions.assertEquals("file-in-root.txt", dto.getName());
+        Assertions.assertEquals("file.txt", dto.getName());
         Assertions.assertEquals(content.length, dto.getSize());
         Assertions.assertEquals("FILE", dto.getType());
     }
