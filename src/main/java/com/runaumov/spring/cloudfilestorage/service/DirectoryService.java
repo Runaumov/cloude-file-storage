@@ -1,17 +1,18 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
+import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
-import io.minio.ListObjectsArgs;
+import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDtoFactory;
+import com.runaumov.spring.cloudfilestorage.exception.CloudFileStorageApiException;
+import com.runaumov.spring.cloudfilestorage.exception.ResourceNotFoundException;
 import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
 import io.minio.Result;
+import io.minio.errors.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,8 @@ import java.util.List;
 public class DirectoryService {
 
     private final MinioClient minioClient;
+    private final MinioStorageService minioStorageService;
+    private final PathParserService pathParserService;
     @Value("${minio.bucket}")
     private String bucketName;
 
@@ -28,69 +31,38 @@ public class DirectoryService {
 
         String prefix = path.endsWith("/") ? path : path + "/";
 
-        try {
-            Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
-                    .bucket(bucketName)
-                    .prefix(prefix)
-                    .recursive(false)
-                    .build());
+        var results = minioStorageService.listDirectoryItems(prefix);
 
-            for (Result<Item> result : results) {
-                Item item = result.get();
-
-                ResourceResponseDto resourceResponseDto = new ResourceResponseDto();
-
-                String objectName = item.objectName();
-                int lastSlashIndex = objectName.lastIndexOf('/');
-
-                resourceResponseDto.setPath(objectName.substring(0, lastSlashIndex + 1));
-                resourceResponseDto.setName(objectName.substring(lastSlashIndex + 1));
-
-                if (item.isDir()) {
-                    resourceResponseDto.setType("DIRECTORY");
-                } else {
-                    resourceResponseDto.setType("FILE");
-                    resourceResponseDto.setSize(item.size());
-                }
-
+        for (Result<Item> result : results) {
+            try {
+                Item item = result.get(); // TODO : Написать нормальную обработку ошибок
+                PathComponents pathComponents = pathParserService.parsePath(item.objectName());
+                ResourceResponseDto resourceResponseDto = ResourceResponseDtoFactory.createDtoFromItemAndPathComponents(item, pathComponents);
                 resources.add(resourceResponseDto);
+            } catch (ErrorResponseException e) {
+                throw new ResourceNotFoundException("Directory not found: " + path + e);
+            } catch (RuntimeException e) {
+                throw new CloudFileStorageApiException("Unknown error" + e);
+            } catch (Exception e) {
+                throw new CloudFileStorageApiException("???" + e);
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Ошибка при получении информации о директории", e);
         }
 
         return resources;
     }
 
     public ResourceResponseDto createEmptyDirectory(String path) {
-        String dir = (path == null) ? "" : path.endsWith("/") ? path : path + "/";
-        String trimmed = dir.endsWith("/") ? dir.substring(0, dir.length() - 1) : dir;
-        int lastSlash = trimmed.lastIndexOf('/');
+        String normalPath = pathParserService.normalizePath(path);
+        PathComponents pathComponents = pathParserService.parsePath(path);
 
-        String name;
-        String parentPath;
-        if (lastSlash == -1) {
-            name = trimmed;
-            parentPath = "";
-        } else {
-            name = trimmed.substring(lastSlash + 1);
-            parentPath = trimmed.substring(0, lastSlash + 1);
-        }
-
-        byte[] empty = new byte[0];
-        try (InputStream inputStream = new ByteArrayInputStream(empty)) {
-            minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(bucketName)
-                    .object(dir)
-                    .stream(inputStream, 0, -1)
-                    .contentType("application/x-directory")
-                    .build());
+        try {
+            minioStorageService.putEmptyItem(normalPath);
         } catch (Exception e) {
-            throw new RuntimeException("Ошибка при создании жиректории" + e.getMessage());
+            // TODO : написать обработку исключений
+            throw new CloudFileStorageApiException("");
         }
 
-        return new ResourceResponseDto(parentPath, name, "DIRECTORY");
-
+        return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
     }
 
 }

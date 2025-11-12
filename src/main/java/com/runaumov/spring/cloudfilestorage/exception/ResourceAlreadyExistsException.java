@@ -1,6 +1,6 @@
 package com.runaumov.spring.cloudfilestorage.exception;
 
-public class ResourceAlreadyExistsException extends AbstractApiException {
+public class ResourceAlreadyExistsException extends CloudFileStorageApiException {
     public ResourceAlreadyExistsException(String message) {
         super(message);
     }
