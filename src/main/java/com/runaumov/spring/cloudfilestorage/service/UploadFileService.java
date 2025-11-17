@@ -1,55 +1,39 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
+import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
+import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDtoFactory;
+import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class UploadFileService {
-
-    private final MinioClient minioClient;
-    @Value("${minio.bucket}")
-    private String bucketName;
+    private final MinioStorageService minioStorageService;
+    private final PathParserService pathParserService;
 
     public List<ResourceResponseDto> uploadFiles(String path, List<MultipartFile> files) {
         List<ResourceResponseDto> uploadFiles = new ArrayList<>();
+        String normalizedPath = pathParserService.normalizePath(path);
 
         for (MultipartFile file : files) {
             try {
-                String objectName = path.endsWith("/") ? path + file.getOriginalFilename() : path + "/" + file.getOriginalFilename();
+                String objectName = normalizedPath + file.getOriginalFilename();
 
-                try (InputStream inputStream = file.getInputStream()) {
-                    minioClient.putObject(
-                            PutObjectArgs.builder()
-                                    .bucket(bucketName)
-                                    .object(objectName)
-                                    .stream(inputStream, file.getSize(), -1)
-                                    .contentType(file.getContentType())
-                                    .build()
-                    );
-                }
+                minioStorageService.putObject(objectName, file);
+                PathComponents pathComponents = pathParserService.parsePath(objectName);
+                StatObjectResponse statObject = minioStorageService.getStatObject(objectName);
 
-                ResourceResponseDto responseDto = new ResourceResponseDto();
-                responseDto.setPath(objectName.substring(0, objectName.lastIndexOf("/") + 1));
-                responseDto.setName(file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("/") + 1));
-                responseDto.setSize(file.getSize());
-                responseDto.setType("FILE");
-
-                uploadFiles.add(responseDto);
+                ResourceResponseDto dto = ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
+                uploadFiles.add(dto);
             } catch (Exception e) {
                 throw new RuntimeException("Ошибка при загрузке файла");
             }
         }
         return uploadFiles;
     }
-
 }

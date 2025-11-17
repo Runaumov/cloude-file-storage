@@ -12,7 +12,6 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,18 +19,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DirectoryService {
 
-    private final MinioClient minioClient;
     private final MinioStorageService minioStorageService;
     private final PathParserService pathParserService;
-    @Value("${minio.bucket}")
-    private String bucketName;
 
     public List<ResourceResponseDto> getDirectoryInfo(String path) {
         List<ResourceResponseDto> resources = new ArrayList<>();
 
-        String prefix = path.endsWith("/") ? path : path + "/";
-
-        var results = minioStorageService.listDirectoryItems(prefix);
+        var results = minioStorageService.listDirectoryItems(pathParserService.normalizePath(path));
 
         for (Result<Item> result : results) {
             try {

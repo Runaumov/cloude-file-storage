@@ -1,26 +1,33 @@
 package com.runaumov.spring.cloudfilestorage.dto;
 
 import com.runaumov.spring.cloudfilestorage.model.ResourceType;
+import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 
 public class ResourceResponseDtoFactory {
 
     public static ResourceResponseDto createDtoFromItemAndPathComponents(Item item, PathComponents pathComponents) {
-        String itemType = item.isDir() ? ResourceType.DIRECTORY.name() : ResourceType.FILE.name();
+        ResourceType resourceType = item.isDir() ? ResourceType.DIRECTORY : ResourceType.FILE;
 
-        return ResourceResponseDto.builder()
-                .path(pathComponents.path())
-                .name(pathComponents.name())
-                .size(item.size())
-                .type(itemType)
-                .build();
+        return createDto(pathComponents, resourceType, item.size());
     }
 
     public static ResourceResponseDto createDtoFromPathComponents(PathComponents pathComponents) {
-        return ResourceResponseDto.builder()
+        return createDto(pathComponents, ResourceType.DIRECTORY, null);
+    }
+
+    public static ResourceResponseDto createDtoFromStatObject(StatObjectResponse statObject, PathComponents pathComponents) {
+        return createDto(pathComponents, ResourceType.FILE, statObject.size());
+    }
+
+    private static ResourceResponseDto createDto(PathComponents pathComponents, ResourceType resourceType, Long size) {
+        ResourceResponseDto.ResourceResponseDtoBuilder builder = ResourceResponseDto.builder()
                 .path(pathComponents.path())
                 .name(pathComponents.name())
-                .type(ResourceType.DIRECTORY.name())
-                .build();
+                .type(resourceType.name());
+        if (size != null) {
+            builder.size(size);
+        }
+        return builder.build();
     }
 }

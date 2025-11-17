@@ -12,17 +12,11 @@ import org.springframework.stereotype.Service;
 public class ResourceDeleteService {
 
     private final MinioClient minioClient;
+    private final MinioStorageService minioStorageService;
     @Value("${minio.bucket}")
     private String bucketName;
 
     public void deleteResource(String path) {
-        try {
-            minioClient.removeObject(RemoveObjectArgs.builder()
-                    .bucket(bucketName)
-                    .object(path)
-                    .build());
-        } catch (Exception e) {
-            throw new RuntimeException("Ошибка при удалении ресурса", e);
-        }
+        minioStorageService.deleteItemForPath(path);
     }
 }
