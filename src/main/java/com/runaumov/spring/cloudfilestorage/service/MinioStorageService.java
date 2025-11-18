@@ -62,16 +62,11 @@ public class MinioStorageService {
                 .build());
     }
 
-    public void deleteItemForPath(String path) {
-        // TODO : переделать обработку исключений, возможно стоит пробросит в сервис для удаления
-        try {
-            minioClient.removeObject(RemoveObjectArgs.builder()
-                    .bucket(bucketName)
-                    .object(path)
-                    .build());
-        } catch (Exception e) {
-            throw new RuntimeException("Ошибка при удалении ресурса", e);
-        }
+    public void deleteItemForPath(String path) throws Exception {
+        minioClient.removeObject(RemoveObjectArgs.builder()
+                .bucket(bucketName)
+                .object(path)
+                .build());
     }
 
     public void copyObject(String to, String from) throws Exception {

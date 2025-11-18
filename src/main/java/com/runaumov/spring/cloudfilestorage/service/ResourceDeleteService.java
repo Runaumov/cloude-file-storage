@@ -10,13 +10,13 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ResourceDeleteService {
-
-    private final MinioClient minioClient;
     private final MinioStorageService minioStorageService;
-    @Value("${minio.bucket}")
-    private String bucketName;
 
     public void deleteResource(String path) {
-        minioStorageService.deleteItemForPath(path);
+        try {
+            minioStorageService.deleteItemForPath(path);
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка при удаоении ресурса", e); // TODO
+        }
     }
 }
