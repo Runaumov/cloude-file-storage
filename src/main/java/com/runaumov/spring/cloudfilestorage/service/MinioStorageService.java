@@ -22,11 +22,11 @@ public class MinioStorageService {
     @Value("${minio.bucket}")
     private String bucketName;
 
-    public Iterable<Result<Item>> listDirectoryItems(String path) {
+    public Iterable<Result<Item>> listDirectoryItems(String path, boolean recursive) {
         return minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName)
                 .prefix(path)
-                .recursive(false)
+                .recursive(recursive)
                 .build());
     }
 
@@ -83,5 +83,12 @@ public class MinioStorageService {
                         .object(from)
                         .build())
                 .build());
+    }
+
+    public InputStream getObjectStream(String objectName) throws Exception {
+        return minioClient.getObject(GetObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .build());
     }
 }

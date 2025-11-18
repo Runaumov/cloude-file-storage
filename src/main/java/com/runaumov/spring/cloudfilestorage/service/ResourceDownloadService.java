@@ -18,52 +18,56 @@ import java.util.zip.ZipOutputStream;
 @RequiredArgsConstructor
 public class ResourceDownloadService {
 
-    private final MinioClient minioClient;
-    @Value("${minio.bucket}")
-    private String bucketName;
+    private final MinioStorageService minioStorageService;
+    private final PathParserService pathParserService;
 
     public byte[] resourceDownload(String path) {
+        boolean isDirectory = path.endsWith("/");
+
         try {
-            if (path.endsWith("/")) {
-                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-                    Iterable<Result<Item>> results = minioClient.listObjects(
-                            ListObjectsArgs.builder()
-                                    .bucket(bucketName)
-                                    .prefix(path)
-                                    .recursive(true)
-                                    .build()
-                    );
-
-                    for (Result<Item> result : results) {
-                        Item item = result.get();
-                        String objectName = item.objectName();
-
-                        try (InputStream inputStream = minioClient.getObject(
-                                GetObjectArgs.builder()
-                                        .bucket(bucketName)
-                                        .object(objectName)
-                                        .build()
-                        )) {
-                            ZipEntry zipEntry = new ZipEntry(objectName.substring(path.length()));
-                            zipOutputStream.putNextEntry(zipEntry);
-                            inputStream.transferTo(zipOutputStream);
-                            zipOutputStream.closeEntry();
-                        }
-                    }
-                } return byteArrayOutputStream.toByteArray();
-            } else {
-                try (InputStream inputStream = minioClient.getObject(
-                        GetObjectArgs.builder()
-                                .bucket(bucketName)
-                                .object(path)
-                                .build()
-                )) {
-                    return inputStream.readAllBytes();
-                }
-            }
+            return isDirectory(path) ? downloadDirectory(path) : downloadFile(path);
         } catch (Exception e) {
             throw new RuntimeException("Ошибка при скачивании ресурса", e);
+        }
+    }
+
+    private boolean isDirectory(String path) {
+        return path.endsWith("/");
+    }
+
+    private byte[] downloadFile(String path) throws Exception {
+        try (InputStream inputStream = minioStorageService.getObjectStream(path)) {
+            return inputStream.readAllBytes();
+        }
+    }
+
+    private byte[] downloadDirectory(String path) throws Exception {
+        String normalizedPath = pathParserService.normalizePath(path);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        try (ZipOutputStream zipOut = new ZipOutputStream(byteArrayOutputStream)) {
+
+            Iterable<Result<Item>> items = minioStorageService.listDirectoryItems(normalizedPath, true);
+
+            for (Result<Item> result : items) {
+                Item item = result.get();
+                String objectName = item.objectName();
+                addObjectToZip(normalizedPath, objectName, zipOut);
+            }
+        }
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private void addObjectToZip(String basePath, String objectName, ZipOutputStream zipOut) throws Exception {
+        try (InputStream inputStream = minioStorageService.getObjectStream(objectName)) {
+            String relativePath = objectName.substring(basePath.length());
+
+            ZipEntry entry = new ZipEntry(relativePath);
+            zipOut.putNextEntry(entry);
+
+            inputStream.transferTo(zipOut);
+
+            zipOut.closeEntry();
         }
     }
 }

@@ -25,7 +25,7 @@ public class DirectoryService {
     public List<ResourceResponseDto> getDirectoryInfo(String path) {
         List<ResourceResponseDto> resources = new ArrayList<>();
 
-        var results = minioStorageService.listDirectoryItems(pathParserService.normalizePath(path));
+        var results = minioStorageService.listDirectoryItems(pathParserService.normalizePath(path), false);
 
         for (Result<Item> result : results) {
             try {
