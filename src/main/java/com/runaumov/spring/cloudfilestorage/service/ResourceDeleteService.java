@@ -1,5 +1,6 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
+import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import io.minio.MinioClient;
 import io.minio.RemoveObjectArgs;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +14,9 @@ public class ResourceDeleteService {
     private final MinioStorageService minioStorageService;
 
     public void deleteResource(String path) {
-        try {
+        MinioUtils.handleMinioException(() -> {
             minioStorageService.deleteItemForPath(path);
-        } catch (Exception e) {
-            throw new RuntimeException("Ошибка при удаоении ресурса", e); // TODO
-        }
+            return null; //TODO: убрать null
+        }, "Failed to delete resource: " + path);
     }
 }

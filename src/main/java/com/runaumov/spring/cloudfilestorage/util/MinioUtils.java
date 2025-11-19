@@ -7,20 +7,24 @@ import io.minio.errors.ErrorResponseException;
 
 public class MinioUtils {
 
+    //TODO: Написать для void
     public static <T> T handleMinioException(MinioCall<T> call, String errorMessage) {
         try {
             return call.execute();
         } catch (ErrorResponseException e) {
             String errorCode = e.errorResponse().code();
 
+            //404
             if ("NoSuchKey".equals(errorCode)) {
                 throw new ResourceNotFoundException(errorMessage + ": resource not found", e);
             }
 
+            //400
             if ("InvalidArgument".equals(errorCode)) {
                 throw new InvalidPathException(errorMessage + ": invalid path", e);
             }
 
+            //500
             throw new CloudFileStorageApiException(errorMessage + ": MinioError: " + errorCode, e);
 
         } catch (Exception e) {

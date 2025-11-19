@@ -1,14 +1,10 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
-import io.minio.GetObjectArgs;
-import io.minio.ListObjectsArgs;
-import io.minio.MinioClient;
+import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import io.minio.Result;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
@@ -22,40 +18,38 @@ public class ResourceDownloadService {
     private final PathParserService pathParserService;
 
     public byte[] resourceDownload(String path) {
-        boolean isDirectory = path.endsWith("/");
-
-        try {
-            return isDirectory(path) ? downloadDirectory(path) : downloadFile(path);
-        } catch (Exception e) {
-            throw new RuntimeException("Ошибка при скачивании ресурса", e);
-        }
+        return isDirectory(path) ? downloadDirectory(path) : downloadFile(path);
     }
 
     private boolean isDirectory(String path) {
         return path.endsWith("/");
     }
 
-    private byte[] downloadFile(String path) throws Exception {
-        try (InputStream inputStream = minioStorageService.getObjectStream(path)) {
-            return inputStream.readAllBytes();
-        }
+    private byte[] downloadFile(String path) {
+        return MinioUtils.handleMinioException(() -> {
+            try (InputStream inputStream = minioStorageService.getObjectStream(path)) {
+                return inputStream.readAllBytes();
+            }
+        }, "Failed to download file: " + path);
     }
 
-    private byte[] downloadDirectory(String path) throws Exception {
-        String normalizedPath = pathParserService.normalizePath(path);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    private byte[] downloadDirectory(String path) {
+        return MinioUtils.handleMinioException(() -> {
+            String normalizedPath = pathParserService.normalizePath(path);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-        try (ZipOutputStream zipOut = new ZipOutputStream(byteArrayOutputStream)) {
+            try (ZipOutputStream zipOut = new ZipOutputStream(byteArrayOutputStream)) {
+                Iterable<Result<Item>> items = minioStorageService.listDirectoryItems(normalizedPath, true);
 
-            Iterable<Result<Item>> items = minioStorageService.listDirectoryItems(normalizedPath, true);
-
-            for (Result<Item> result : items) {
-                Item item = result.get();
-                String objectName = item.objectName();
-                addObjectToZip(normalizedPath, objectName, zipOut);
+                for (Result<Item> result : items) {
+                    Item item = result.get();
+                    String objectName = item.objectName();
+                    addObjectToZip(normalizedPath, objectName, zipOut);
+                }
             }
-        }
-        return byteArrayOutputStream.toByteArray();
+
+            return byteArrayOutputStream.toByteArray();
+        }, "Failed to download directory: "  + path);
     }
 
     private void addObjectToZip(String basePath, String objectName, ZipOutputStream zipOut) throws Exception {
