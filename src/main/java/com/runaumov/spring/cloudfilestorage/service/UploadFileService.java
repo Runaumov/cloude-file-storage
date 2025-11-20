@@ -3,6 +3,7 @@ package com.runaumov.spring.cloudfilestorage.service;
 import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDtoFactory;
+import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,18 +22,16 @@ public class UploadFileService {
         String normalizedPath = pathParserService.normalizePath(path);
 
         for (MultipartFile file : files) {
-            try {
-                String objectName = normalizedPath + file.getOriginalFilename();
+            String objectName = normalizedPath + file.getOriginalFilename();
 
+            ResourceResponseDto dto= MinioUtils.handleMinioException(() -> {
                 minioStorageService.putObject(objectName, file);
                 PathComponents pathComponents = pathParserService.parsePath(objectName);
                 StatObjectResponse statObject = minioStorageService.getStatObject(objectName);
+                return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
+            }, "Failed to upload resource");
 
-                ResourceResponseDto dto = ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
-                uploadFiles.add(dto);
-            } catch (Exception e) {
-                throw new RuntimeException("Ошибка при загрузке файла");
-            }
+            uploadFiles.add(dto);
         }
         return uploadFiles;
     }
