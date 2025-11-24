@@ -50,7 +50,7 @@ public class SecurityConfig {
             HttpSecurity httpSecurity, AuthenticationManager authenticationManager) throws Exception {
 
         RequestMatcher requestMatcher = request -> "POST".equals(request.getMethod()) &&
-                "/api/auth/sign-in".equals(request.getRequestURI());
+                "/auth/sign-in".equals(request.getRequestURI());
 
         JsonAuthenticationFilter jsonAuthenticationFilter =
                 new JsonAuthenticationFilter(requestMatcher, authenticationManager);
@@ -58,7 +58,7 @@ public class SecurityConfig {
         httpSecurity
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterAt(jsonAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
