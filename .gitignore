@@ -1,6 +1,7 @@
 HELP.md
 .gradle
 build/
+logs/
 .gitattributes
 .gitignore
 !gradle/wrapper/gradle-wrapper.jar
