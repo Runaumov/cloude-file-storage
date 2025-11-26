@@ -1,9 +1,6 @@
 package com.runaumov.spring.cloudfilestorage.advice;
 
-import com.runaumov.spring.cloudfilestorage.exception.CloudFileStorageApiException;
-import com.runaumov.spring.cloudfilestorage.exception.InvalidPathException;
-import com.runaumov.spring.cloudfilestorage.exception.ResourceAlreadyExistsException;
-import com.runaumov.spring.cloudfilestorage.exception.ResourceNotFoundException;
+import com.runaumov.spring.cloudfilestorage.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -41,12 +38,19 @@ private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHand
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
+    @ExceptionHandler({UsernameAlreadyExistException.class})
+    public ResponseEntity<Void> handleUsernameAlreadyExists(UsernameAlreadyExistException exception) {
+        logger.warn("UsernameAlreadyExistException: {}", exception.getMessage(), exception);
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    }
+
     @ExceptionHandler({CloudFileStorageApiException.class})
     public ResponseEntity<Void> handleCloudFileStorageApiException(CloudFileStorageApiException exception) {
         logger.error("CloudFileStorageApiException: {}", exception.getMessage(), exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
+    @ExceptionHandler({Exception.class})
     public ResponseEntity<Void> handeUnexpectedException(Exception exception) {
         logger.error("Unexpected exception:", exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
