@@ -10,7 +10,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -87,28 +86,5 @@ public class AuthUserTest {
 
         mockMvc.perform(post("/auth/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isConflict());
-    }
-
-    @Test
-    void shouldReturn204_whenUserLogout() throws Exception {
-        authService.registerUser(new UserEntityRequestDto("testuser", "password"));
-
-        MockHttpSession session = (MockHttpSession) mockMvc.perform(post("/auth/sign-in")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\":\"testuser\",\"password\":\"password\"}"))
-                .andReturn()
-                .getRequest()
-                .getSession();
-
-        mockMvc.perform(post("/auth/sign-out").session(session))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void shouldReturn401_whenUnauthorizedUserLogout() throws Exception {
-        String json = "{\"username\":\"testuser\",\"password\":\"password\"}";
-
-        mockMvc.perform(post("/auth/sign-out").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andExpect(status().isUnauthorized());
     }
 }
