@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -59,14 +60,20 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+//                        .requestMatchers("/auth/sign-out").authenticated()
                         .anyRequest().authenticated())
                 .logout(logout -> logout
                         .logoutUrl("/auth/sign-out")
                         .logoutSuccessHandler(((request, response, authentication) -> {
-                            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                            if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+                                response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                            } else {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            }
                         }))
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID"))
+                        .deleteCookies("JSESSIONID")
+                        .permitAll())
                 .addFilterAt(jsonAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
