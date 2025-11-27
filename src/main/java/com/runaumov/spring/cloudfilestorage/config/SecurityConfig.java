@@ -1,23 +1,15 @@
 package com.runaumov.spring.cloudfilestorage.config;
 
 import com.runaumov.spring.cloudfilestorage.config.filter.JsonAuthenticationFilter;
-import com.runaumov.spring.cloudfilestorage.security.UserEntityDetails;
 import com.runaumov.spring.cloudfilestorage.service.UserEntityDetailService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.config.web.PathPatternRequestMatcherBuilderFactoryBean;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -62,11 +54,16 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .logout(logout -> logout
                         .logoutUrl("/auth/sign-out")
-                        .logoutSuccessHandler(((request, response, authentication) -> {
-                            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                        }))
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            if (authentication != null && authentication.isAuthenticated()) {
+                                response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                            } else {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            }
+                        })
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID"))
+                        .deleteCookies("JSESSIONID")
+                        .permitAll())
                 .addFilterAt(jsonAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();

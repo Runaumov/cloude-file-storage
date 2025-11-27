@@ -4,7 +4,6 @@ import com.runaumov.spring.cloudfilestorage.dto.UserEntityRequestDto;
 import com.runaumov.spring.cloudfilestorage.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -86,5 +86,18 @@ public class AuthUserTest {
 
         mockMvc.perform(post("/auth/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturn204_whenUserLogout() throws Exception {
+        mockMvc.perform(post("/auth/sign-out")
+                        .with(user("testuser"))) // имитируем авторизованного пользователя
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldReturn401_whenUserNotAuthorized() throws Exception {
+        mockMvc.perform(post("/auth/sign-out"))
+                .andExpect(status().isUnauthorized());
     }
 }
