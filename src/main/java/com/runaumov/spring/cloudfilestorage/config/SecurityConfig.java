@@ -52,6 +52,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .anyRequest().authenticated())
+                .exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                }))
                 .logout(logout -> logout
                         .logoutUrl("/auth/sign-out")
                         .logoutSuccessHandler((request, response, authentication) -> {
