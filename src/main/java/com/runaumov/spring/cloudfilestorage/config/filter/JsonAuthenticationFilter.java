@@ -2,7 +2,9 @@ package com.runaumov.spring.cloudfilestorage.config.filter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.runaumov.spring.cloudfilestorage.dto.UserSessionDto;
 import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
+import com.runaumov.spring.cloudfilestorage.security.UserEntityDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,8 +55,20 @@ public class JsonAuthenticationFilter extends AbstractAuthenticationProcessingFi
     }
 
     @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        SecurityContextHolder.getContext().setAuthentication(authResult);
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+                                            FilterChain chain, Authentication authResult) throws IOException {
+
+        Object principal = authResult.getPrincipal();
+        UserSessionDto userSessionDto = null;
+
+        if (principal instanceof UserEntityDetails userEntityDetails) {
+            userSessionDto = new UserSessionDto(userEntityDetails.getId(), userEntityDetails.getUsername());
+        }
+
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userSessionDto, null, authResult.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+
         request.getSession(true).setAttribute(
                 HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
                 SecurityContextHolder.getContext()

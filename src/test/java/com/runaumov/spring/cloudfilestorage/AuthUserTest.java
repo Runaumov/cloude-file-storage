@@ -1,6 +1,7 @@
 package com.runaumov.spring.cloudfilestorage;
 
 import com.runaumov.spring.cloudfilestorage.dto.UserEntityRequestDto;
+import com.runaumov.spring.cloudfilestorage.dto.UserSessionDto;
 import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
 import com.runaumov.spring.cloudfilestorage.security.UserEntityDetails;
 import com.runaumov.spring.cloudfilestorage.service.AuthService;
@@ -11,12 +12,21 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockCookie;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.List;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -106,13 +116,15 @@ public class AuthUserTest {
 
     @Test
     void shouldGetUserEntityResponseDto_whenUserAuthorized() throws Exception {
-        UserEntity userEntity = new UserEntity();
-        userEntity.setUsername("username");
+        UserSessionDto sessionDto = new UserSessionDto(1L, "username");
 
-        UserEntityDetails userEntityDetails = new UserEntityDetails(userEntity);
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(sessionDto, null, List.of());
 
-        mockMvc.perform(get("/user/me").with(user(userEntityDetails)))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/user/me")
+                        .with(authentication(auth)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("username"));
     }
 
     @Test
