@@ -14,7 +14,7 @@ import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/resource")
+@RequestMapping("/api/resource")
 public class ResourceController {
 
     private final UploadFileService uploadFilesService;
@@ -29,7 +29,7 @@ public class ResourceController {
     @PostMapping
     public ResponseEntity<List<ResourceResponseDto>> uploadFile(
             @RequestParam("path") String path,
-            @RequestParam("file") List<MultipartFile> files
+            @RequestParam("object") List<MultipartFile> files
     ) {
         List<ResourceResponseDto> uploadFiles = uploadFilesService.uploadFiles(path, files);
         return ResponseEntity.status(HttpStatus.CREATED).body(uploadFiles);

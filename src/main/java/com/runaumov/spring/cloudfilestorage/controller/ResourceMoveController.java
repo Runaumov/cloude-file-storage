@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/resource/move")
+@RequestMapping("/api/resource/move")
 public class ResourceMoveController {
 
     private final ResourceMoveService resourceMoveService;

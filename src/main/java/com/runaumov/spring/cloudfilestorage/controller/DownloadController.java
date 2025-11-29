@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/resource/download")
+@RequestMapping("/api/resource/download")
 public class DownloadController {
 
     private final ResourceDownloadService resourceDownloadService;

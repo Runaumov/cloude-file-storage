@@ -11,12 +11,14 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 @SpringBootTest
+@ActiveProfiles("test-service")
 public class ResourceDeleteServiceTest extends AbstractServiceTest {
 
     private final ResourceDeleteService resourceDeleteService;

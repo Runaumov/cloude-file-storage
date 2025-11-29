@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/directory")
+@RequestMapping("/api/directory")
 public class DirectoryController {
 
     private final DirectoryService directoryService;

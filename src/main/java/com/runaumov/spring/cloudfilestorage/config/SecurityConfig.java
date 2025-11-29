@@ -43,7 +43,7 @@ public class SecurityConfig {
             HttpSecurity httpSecurity, AuthenticationManager authenticationManager) throws Exception {
 
         RequestMatcher requestMatcher = request -> "POST".equals(request.getMethod()) &&
-                "/auth/sign-in".equals(request.getRequestURI());
+                "/api/auth/sign-in".equals(request.getRequestURI());
 
         JsonAuthenticationFilter jsonAuthenticationFilter =
                 new JsonAuthenticationFilter(requestMatcher, authenticationManager);
@@ -51,13 +51,14 @@ public class SecurityConfig {
         httpSecurity
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/", "/index.html", "/assets/**", "/vite.svg", "/*.js", "/*.css").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 }))
                 .logout(logout -> logout
-                        .logoutUrl("/auth/sign-out")
+                        .logoutUrl("/api/auth/sign-out")
                         .logoutSuccessHandler((request, response, authentication) -> {
                             if (authentication != null && authentication.isAuthenticated()) {
                                 response.setStatus(HttpServletResponse.SC_NO_CONTENT);

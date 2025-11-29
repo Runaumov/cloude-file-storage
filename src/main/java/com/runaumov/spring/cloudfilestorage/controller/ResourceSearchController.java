@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/resource/search")
+@RequestMapping("/api/resource/search")
 public class ResourceSearchController {
 
     private final ResourceSearchService resourceSearchService;

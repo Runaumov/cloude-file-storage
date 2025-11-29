@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,7 +22,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @SpringBootTest
+@ActiveProfiles("test-service")
 public class DirectoryServiceTest extends AbstractServiceTest {
+
     private final DirectoryService directoryService;
 
     @Autowired
