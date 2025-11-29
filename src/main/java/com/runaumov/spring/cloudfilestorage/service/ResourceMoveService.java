@@ -9,49 +9,72 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-    @Service
-    @RequiredArgsConstructor
-    public class ResourceMoveService {
-        private final MinioStorageService minioStorageService;
-        private final PathParserService pathParserService;
+@Service
+@RequiredArgsConstructor
+public class ResourceMoveService {
+    private final MinioStorageService minioStorageService;
+    private final PathParserService pathParserService;
 
-        public ResourceResponseDto resourceMove(String from, String to) {
+    public ResourceResponseDto resourceMove(String from, String to) {
 
-            return MinioUtils.handleMinioException(() -> {
-                if (!isDirectory(from)) {
-                    minioStorageService.copyObject(to, from);
-                    minioStorageService.deleteItemForPath(from);
+        return MinioUtils.handleMinioException(() -> {
+            if (!isDirectory(from)) {
+                String targetPath = resolveConflict(to);
 
-                    StatObjectResponse statObject = minioStorageService.getStatObject(to);
-                    PathComponents pathComponents = pathParserService.parsePath(to);
+                minioStorageService.copyObject(targetPath, from);
+                minioStorageService.deleteItemForPath(from);
 
-                    return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
-                } else {
-                    String normalizedFrom = pathParserService.normalizePath(from);
-                    String normalizedTo = pathParserService.normalizePath(to);
+                StatObjectResponse statObject = minioStorageService.getStatObject(targetPath);
+                PathComponents pathComponents = pathParserService.parsePath(targetPath);
 
-                    var results = minioStorageService.listDirectoryItems(normalizedFrom, true);
+                return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
+            } else {
+                String normalizedFrom = pathParserService.normalizePath(from);
+                String normalizedTo = pathParserService.normalizePath(to);
 
-                    for (Result<Item> result : results) {
-                        Item item = result.get();
-                        String oldKey = item.objectName();
-                        String newKey = normalizedTo + oldKey.substring(normalizedFrom.length());
+                var results = minioStorageService.listDirectoryItems(normalizedFrom, true);
 
-                        minioStorageService.copyObject(newKey, oldKey);
-                        minioStorageService.deleteItemForPath(oldKey);
-                    }
+                for (Result<Item> result : results) {
+                    Item item = result.get();
+                    String oldKey = item.objectName();
+                    String newKeyBase = normalizedTo + oldKey.substring(normalizedFrom.length());
+                    String newKey = resolveConflict(newKeyBase);
 
-                    PathComponents pathComponents = pathParserService.parsePath(to);
-                    return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
+                    minioStorageService.copyObject(newKey, oldKey);
+                    minioStorageService.deleteItemForPath(oldKey);
                 }
-            }, "Failed to move resources from: " + from + " to: " + to);
-        }
 
-        private boolean isDirectory(String path) {
-            try {
-                return minioStorageService.listDirectoryItems(pathParserService.normalizePath(path), false).iterator().hasNext();
-            } catch (Exception e) {
-                return false;
+                PathComponents pathComponents = pathParserService.parsePath(to);
+                return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
             }
+        }, "Failed to move resources from: " + from + " to: " + to);
+    }
+
+    private boolean isDirectory(String path) {
+        try {
+            return minioStorageService.listDirectoryItems(pathParserService.normalizePath(path), false).iterator().hasNext();
+        } catch (Exception e) {
+            return false;
         }
+    }
+
+    private String resolveConflict(String path) {
+        String pathWithSuffix = path;
+        int copyIndex = 1;
+
+        while (minioStorageService.exists(pathWithSuffix)) {
+            pathWithSuffix = appendCopySuffix(path, copyIndex);
+            copyIndex++;
+        }
+        return pathWithSuffix;
+    }
+
+    private String appendCopySuffix(String path, int copyIndex) {
+        int dotIndex = path.lastIndexOf('.');
+        if (dotIndex > 0) {
+            return path.substring(0, dotIndex) + "_copy" + copyIndex + path.substring(dotIndex);
+        } else {
+            return path + "_copy" + copyIndex;
+        }
+    }
 }

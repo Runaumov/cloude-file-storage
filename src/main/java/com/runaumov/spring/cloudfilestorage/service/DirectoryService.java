@@ -3,6 +3,7 @@ package com.runaumov.spring.cloudfilestorage.service;
 import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDtoFactory;
+import com.runaumov.spring.cloudfilestorage.exception.ResourceNotFoundException;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import io.minio.Result;
 import io.minio.messages.Item;
@@ -19,7 +20,12 @@ public class DirectoryService {
     private final PathParserService pathParserService;
 
     public List<ResourceResponseDto> getDirectoryInfo(String path) {
-        String normalPath = pathParserService.normalizePath(path);
+        String normalPath = (path == null || path.isBlank()) ? "" : pathParserService.normalizePath(path);
+
+        if (!normalPath.isEmpty() && !minioStorageService.exists(normalPath)) {
+            throw new ResourceNotFoundException("Folder not found: " + path);
+        }
+
         List<ResourceResponseDto> resources = new ArrayList<>();
         var results = minioStorageService.listDirectoryItems(pathParserService.normalizePath(path), false);
 
@@ -44,5 +50,6 @@ public class DirectoryService {
 
         return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
     }
+
 
 }

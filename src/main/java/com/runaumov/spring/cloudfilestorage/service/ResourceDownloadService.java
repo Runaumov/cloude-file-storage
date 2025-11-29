@@ -18,11 +18,11 @@ public class ResourceDownloadService {
     private final PathParserService pathParserService;
 
     public byte[] resourceDownload(String path) {
-        return isDirectory(path) ? downloadDirectory(path) : downloadFile(path);
-    }
-
-    private boolean isDirectory(String path) {
-        return path.endsWith("/");
+        if (minioStorageService.isDirectory(path)) {
+            return downloadDirectory(path);
+        } else {
+            return downloadFile(path);
+        }
     }
 
     private byte[] downloadFile(String path) {
@@ -41,20 +41,35 @@ public class ResourceDownloadService {
             try (ZipOutputStream zipOut = new ZipOutputStream(byteArrayOutputStream)) {
                 Iterable<Result<Item>> items = minioStorageService.listDirectoryItems(normalizedPath, true);
 
+                boolean hasFiles = false;
+
                 for (Result<Item> result : items) {
                     Item item = result.get();
                     String objectName = item.objectName();
+
+                    if (objectName.endsWith("/")) {
+                        continue;
+                    }
+
                     addObjectToZip(normalizedPath, objectName, zipOut);
+                    hasFiles = true;
+                }
+
+                if (!hasFiles) {
+                    ZipEntry entry = new ZipEntry(".empty");
+                    zipOut.putNextEntry(entry);
+                    zipOut.closeEntry();
                 }
             }
 
             return byteArrayOutputStream.toByteArray();
-        }, "Failed to download directory: "  + path);
+        }, "Failed to download directory: " + path);
     }
 
     private void addObjectToZip(String basePath, String objectName, ZipOutputStream zipOut) throws Exception {
         try (InputStream inputStream = minioStorageService.getObjectStream(objectName)) {
             String relativePath = objectName.substring(basePath.length());
+            if (relativePath.startsWith("/")) relativePath = relativePath.substring(1);
 
             ZipEntry entry = new ZipEntry(relativePath);
             zipOut.putNextEntry(entry);
