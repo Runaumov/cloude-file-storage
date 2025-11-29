@@ -1,6 +1,7 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
 import io.minio.*;
+import io.minio.errors.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,7 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +69,18 @@ public class MinioStorageService {
                 .build());
     }
 
+    public void deletePathRecursive(String path) throws Exception {
+        var results = listDirectoryItems(path, true);
+
+        for (Result<Item> result : results) {
+            deleteItemForPath(result.get().objectName());
+        }
+
+        try {
+            deleteItemForPath(path);
+        } catch (Exception ignored) {}
+    }
+
     public void copyObject(String to, String from) throws Exception {
         minioClient.copyObject(CopyObjectArgs.builder()
                 .bucket(bucketName)
@@ -82,4 +98,6 @@ public class MinioStorageService {
                         .object(objectName)
                         .build());
     }
+
+
 }

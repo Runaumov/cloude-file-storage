@@ -12,11 +12,21 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ResourceDeleteService {
     private final MinioStorageService minioStorageService;
+    private final PathParserService pathParserService;
 
     public void deleteResource(String path) {
         MinioUtils.handleMinioException(() -> {
-            minioStorageService.deleteItemForPath(path);
+            if (isDirectory(path)) {
+                String normalizePath = pathParserService.normalizePath(path);
+                minioStorageService.deletePathRecursive(normalizePath);
+            } else {
+                minioStorageService.deleteItemForPath(path);
+            }
             return null; //TODO: убрать null
         }, "Failed to delete resource: " + path);
+    }
+
+    private boolean isDirectory(String path) {
+        return path.endsWith("/") || minioStorageService.listDirectoryItems(path, false).iterator().hasNext();
     }
 }
