@@ -1,8 +1,10 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
+import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import io.minio.MinioClient;
 import io.minio.RemoveObjectArgs;
+import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -16,17 +18,18 @@ public class ResourceDeleteService {
 
     public void deleteResource(String path) {
         MinioUtils.handleMinioException(() -> {
-            if (isDirectory(path)) {
-                String normalizePath = pathParserService.normalizePath(path);
-                minioStorageService.deletePathRecursive(normalizePath);
+            if (path.endsWith("/")) {
+                minioStorageService.deletePathRecursive(path);
             } else {
                 minioStorageService.deleteItemForPath(path);
             }
-            return null; //TODO: убрать null
+            return null;
         }, "Failed to delete resource: " + path);
     }
 
-    private boolean isDirectory(String path) {
-        return path.endsWith("/") || minioStorageService.listDirectoryItems(path, false).iterator().hasNext();
+    // TODO
+    private boolean isDirectoryN(StatObjectResponse statObject) {
+        return "application/x-directory".equals(statObject.contentType())
+                || statObject.object().endsWith("/");
     }
 }

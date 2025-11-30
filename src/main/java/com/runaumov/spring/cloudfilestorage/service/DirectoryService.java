@@ -18,7 +18,6 @@ public class DirectoryService {
 
     private final MinioStorageService minioStorageService;
     private final PathParserService pathParserService;
-    private final ResourceValidationService validator;
 
     public List<ResourceResponseDto> getDirectoryInfo(String path) {
         PathComponents pathComponents = pathParserService.parsePath(path);

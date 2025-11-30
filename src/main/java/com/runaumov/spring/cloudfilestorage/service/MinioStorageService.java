@@ -71,7 +71,7 @@ public class MinioStorageService {
         for (Result<Item> result : results) {
             deleteItemForPath(result.get().objectName());
         }
-
+        // TODO : грязный код, подумать, что можно сделать
         try {
             deleteItemForPath(path);
         } catch (Exception ignored) {}
