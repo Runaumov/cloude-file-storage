@@ -9,7 +9,7 @@
 Что еще нужно прочекать и исправить:
 ResourceDeleteService +
 ResourceDownloadService
-ResourceInfoService
+ResourceInfoService +
 ResourceMoveService
 ResourceSearchService
 DownloadController

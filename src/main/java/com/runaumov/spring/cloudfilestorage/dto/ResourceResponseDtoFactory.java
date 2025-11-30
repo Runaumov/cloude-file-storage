@@ -25,7 +25,7 @@ public class ResourceResponseDtoFactory {
                 .path(pathComponents.path())
                 .name(pathComponents.name())
                 .type(resourceType.name());
-        if (size != null) {
+        if (resourceType == ResourceType.FILE && size != null) {
             builder.size(size);
         }
         return builder.build();

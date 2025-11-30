@@ -1,5 +1,6 @@
 package com.runaumov.spring.cloudfilestorage.controller;
 
+import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDirectoryDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import com.runaumov.spring.cloudfilestorage.service.DirectoryService;
 import lombok.RequiredArgsConstructor;

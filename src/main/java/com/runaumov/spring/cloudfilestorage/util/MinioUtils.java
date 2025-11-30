@@ -3,7 +3,9 @@ package com.runaumov.spring.cloudfilestorage.util;
 import com.runaumov.spring.cloudfilestorage.exception.CloudFileStorageApiException;
 import com.runaumov.spring.cloudfilestorage.exception.InvalidPathException;
 import com.runaumov.spring.cloudfilestorage.exception.ResourceNotFoundException;
+import io.minio.Result;
 import io.minio.errors.ErrorResponseException;
+import io.minio.messages.Item;
 
 public class MinioUtils {
 

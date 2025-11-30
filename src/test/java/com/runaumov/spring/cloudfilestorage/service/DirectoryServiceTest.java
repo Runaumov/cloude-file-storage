@@ -1,6 +1,7 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
 import com.runaumov.spring.cloudfilestorage.AbstractServiceTest;
+import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDirectoryDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;

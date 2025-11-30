@@ -11,28 +11,23 @@ public class PathParserService {
             return new PathComponents("", "");
         }
 
-        // TODO : возможно стоит вынести в отдельные методы
-        if (path.endsWith("/")) {
+        boolean isDir = path.endsWith("/");
+        String normalizedPath = isDir ? path.substring(0, path.length() - 1) : path;
 
-            String pathWithoutTrailingSlash = path.substring(0, path.length() - 1);
-            int lastSlashIndex = pathWithoutTrailingSlash.lastIndexOf('/');
+        int lastSlashIndex = normalizedPath.lastIndexOf('/');
 
-            if (lastSlashIndex == -1) {
-                return new PathComponents(path, path);
-            } else {
-                String name = pathWithoutTrailingSlash.substring(lastSlashIndex + 1) + "/";
-                return new PathComponents(path, name);
-            }
-        }
+        String folderPath;
+        String name;
 
-        int lastSlashIndex = path.lastIndexOf('/');
         if (lastSlashIndex == -1) {
-            return new PathComponents("", path);
+            folderPath = "";
+            name = isDir ? normalizedPath + "/" : normalizedPath;
         } else {
-            String folderName = path.substring(0, lastSlashIndex + 1);
-            String fileName = path.substring(lastSlashIndex + 1);
-            return new PathComponents(folderName, fileName);
+            folderPath = normalizedPath.substring(0, lastSlashIndex + 1);
+            name = normalizedPath.substring(lastSlashIndex + 1) + (isDir ? "/" : "");
         }
+
+        return new PathComponents(folderPath, name);
     }
 
     public String normalizePath(String path) {
