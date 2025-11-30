@@ -20,14 +20,26 @@ public class DirectoryService {
     private final PathParserService pathParserService;
 
     public List<ResourceResponseDto> getDirectoryInfo(String path) {
-        PathComponents pathComponents = pathParserService.parsePath(path);
+        String normalizedPath = pathParserService.normalizePath(path);
+        PathComponents pathComponents = pathParserService.parsePath(normalizedPath);
         String folderName = pathComponents.path();
 
         if (!folderName.isEmpty()) {
-            MinioUtils.handleMinioException(
-                    () -> minioStorageService.getStatObject(folderName),
-                    "Folder not found: " + path
-            );
+            try {
+                MinioUtils.handleMinioException(
+                        () -> minioStorageService.getStatObject(folderName),
+                        "Folder not found: " + normalizedPath
+                );
+            } catch (ResourceNotFoundException e) {
+                boolean hasContent = MinioUtils.handleMinioException(
+                        () -> minioStorageService.listDirectoryItems(folderName, false).iterator().hasNext(),
+                        "Failed to check directory: " + normalizedPath
+                );
+
+                if (!hasContent) {
+                    throw new ResourceNotFoundException("Folder not found: " + normalizedPath);
+                }
+            }
         }
 
         List<ResourceResponseDto> resources = new ArrayList<>();
