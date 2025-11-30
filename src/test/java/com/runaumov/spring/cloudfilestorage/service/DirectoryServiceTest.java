@@ -71,28 +71,24 @@ public class DirectoryServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void shouldGetResourceResponseDto_whenDirectoryCreate() throws Exception {
-        String objectPath = "directory/subdirectory";
+    void shouldCreateEmptyDirectoryAndReturnCorrectDto_whenPathExist() throws Exception {
+        String path = "directory/subdirectory/";
 
-        ResourceResponseDto dto = directoryService.createEmptyDirectory(objectPath);
-
-        Assertions.assertNotNull(dto);
-        Assertions.assertEquals("subdirectory", dto.getName());
-        Assertions.assertEquals("directory/", dto.getPath());
-        Assertions.assertEquals("DIRECTORY", dto.getType());
-
-        boolean directoryExist = false;
-        Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
-                .bucket(getTestBucketName()).recursive(true).build());
+        ResourceResponseDto dto = directoryService.createEmptyDirectory(path);
 
         try (InputStream inputStream = minioClient.getObject(GetObjectArgs.builder()
                 .bucket(getTestBucketName())
-                .object("directory/subdirectory/")
+                .object(path)
                 .build())) {
             byte[] content = inputStream.readAllBytes();
             Assertions.assertEquals(0, content.length);
         }
-    }
 
+        Assertions.assertNotNull(dto);
+        Assertions.assertEquals("directory/subdirectory/", dto.getPath());
+        Assertions.assertEquals("", dto.getName());
+        Assertions.assertNull(dto.getSize());
+        Assertions.assertEquals("DIRECTORY", dto.getType());
+    }
 
 }

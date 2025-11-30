@@ -40,13 +40,13 @@ public class DirectoryService {
     }
 
     public ResourceResponseDto createEmptyDirectory(String path) {
-        String normalPath = pathParserService.normalizePath(path);
         PathComponents pathComponents = pathParserService.parsePath(path);
+        String folderName = pathComponents.path();
 
         MinioUtils.handleMinioException(() -> {
-            minioStorageService.putEmptyItem(normalPath);
-            return null;//TODO: убрать null
-        }, "Failed to create directory: " + normalPath);
+            minioStorageService.putEmptyItem(folderName);
+            return null;
+        }, "Failed to create directory: " + folderName);
 
         return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
     }
