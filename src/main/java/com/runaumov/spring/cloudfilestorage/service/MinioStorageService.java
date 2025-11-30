@@ -116,12 +116,10 @@ public class MinioStorageService {
     }
 
     public boolean isDirectory(String path) {
-        // Если заканчивается на /, это директория
         if (path.endsWith("/")) {
             return true;
         }
 
-        // Проверяем, существует ли точный объект с таким именем
         try {
             minioClient.statObject(
                     StatObjectArgs.builder()
@@ -129,18 +127,15 @@ public class MinioStorageService {
                             .object(path)
                             .build()
             );
-            // Объект существует - это файл
             return false;
         } catch (ErrorResponseException e) {
             if (!"NoSuchKey".equals(e.errorResponse().code())) {
                 throw new RuntimeException("Error checking object", e);
             }
-            // Объект не существует, проверяем как директорию
         } catch (Exception e) {
             throw new RuntimeException("Error checking object", e);
         }
 
-        // Проверяем директорию с /
         try {
             minioClient.statObject(
                     StatObjectArgs.builder()
@@ -148,7 +143,6 @@ public class MinioStorageService {
                             .object(path + "/")
                             .build()
             );
-            // Директория существует как объект
             return true;
         } catch (ErrorResponseException e) {
             if (!"NoSuchKey".equals(e.errorResponse().code())) {
@@ -158,7 +152,6 @@ public class MinioStorageService {
             throw new RuntimeException("Error checking directory", e);
         }
 
-        // Проверяем, есть ли объекты с префиксом path/
         try {
             Iterable<Result<Item>> results = minioClient.listObjects(
                     ListObjectsArgs.builder()

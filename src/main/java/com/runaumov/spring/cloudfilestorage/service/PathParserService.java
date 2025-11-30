@@ -7,15 +7,23 @@ import org.springframework.stereotype.Service;
 public class PathParserService {
 
     public PathComponents parsePath(String path) {
-        String normalPath = normalizePath(path);
-        String pathWithoutTrailingSlash = removeTrailingSlash(normalPath);
 
-        int lastSlashIndex = pathWithoutTrailingSlash.lastIndexOf('/');
-
-        if (lastSlashIndex == -1) {
-            return new PathComponents("", pathWithoutTrailingSlash);
+        if (path == null || path.isEmpty()) {
+            return new PathComponents("", "");
         }
-        return new PathComponents(pathWithoutTrailingSlash.substring(0, lastSlashIndex + 1), pathWithoutTrailingSlash.substring(lastSlashIndex + 1));
+
+        if (path.endsWith("/")) {
+            return new PathComponents(path, "");
+        }
+
+        int lastSlashIndex = path.lastIndexOf('/');
+        if (lastSlashIndex == -1) {
+            return new PathComponents("", path);
+        } else {
+            String folderName = path.substring(0, lastSlashIndex + 1);
+            String fileName = path.substring(lastSlashIndex + 1);
+            return new PathComponents(folderName, fileName);
+        }
     }
 
     public String normalizePath(String path) {
@@ -25,7 +33,4 @@ public class PathParserService {
         return path.endsWith("/") ? path : path + "/";
     }
 
-    private String removeTrailingSlash(String path) {
-        return path.endsWith("/") && !path.isEmpty() ? path.substring(0, path.length() - 1) : path;
-    }
 }
