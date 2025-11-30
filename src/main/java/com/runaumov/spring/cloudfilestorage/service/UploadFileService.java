@@ -19,17 +19,18 @@ public class UploadFileService {
 
     public List<ResourceResponseDto> uploadFiles(String path, List<MultipartFile> files) {
         List<ResourceResponseDto> uploadFiles = new ArrayList<>();
-        String normalizedPath = pathParserService.normalizePath(path);
+        PathComponents pathComponents = pathParserService.parsePath(path);
+        String folderName = pathComponents.path();
 
         for (MultipartFile file : files) {
-            String objectNameBase = normalizedPath + file.getOriginalFilename();
-            String objectName = resolveConflict(objectNameBase);
+            String objectOriginalName = folderName + file.getOriginalFilename();
+            String finalName = resolveConflict(objectOriginalName);
 
             ResourceResponseDto dto= MinioUtils.handleMinioException(() -> {
-                minioStorageService.putObject(objectName, file);
-                PathComponents pathComponents = pathParserService.parsePath(objectName);
-                StatObjectResponse statObject = minioStorageService.getStatObject(objectName);
-                return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
+                minioStorageService.putObject(finalName, file);
+                PathComponents itemPathComponents = pathParserService.parsePath(finalName);
+                StatObjectResponse statObject = minioStorageService.getStatObject(finalName);
+                return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, itemPathComponents);
             }, "Failed to upload resource");
 
             uploadFiles.add(dto);
@@ -42,7 +43,7 @@ public class UploadFileService {
         String pathWithSuffix = path;
         int copyIndex = 1;
 
-        while (minioStorageService.exists(pathWithSuffix)) {
+        while (checkObjectExists(pathWithSuffix)) {
             pathWithSuffix = appendCopySuffix(path, copyIndex);
             copyIndex++;
         }
@@ -56,5 +57,12 @@ public class UploadFileService {
         } else {
             return path + "_copy" + copyIndex;
         }
+    }
+
+    private boolean checkObjectExists(String path) {
+        return MinioUtils.handleMinioException(
+                () -> minioStorageService.objectExist(path),
+                "Failed to check object existence: " + path
+        );
     }
 }

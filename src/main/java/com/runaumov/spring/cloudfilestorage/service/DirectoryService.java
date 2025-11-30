@@ -18,24 +18,28 @@ public class DirectoryService {
 
     private final MinioStorageService minioStorageService;
     private final PathParserService pathParserService;
+    private final ResourceValidationService validator;
 
     public List<ResourceResponseDto> getDirectoryInfo(String path) {
-        String normalPath = (path == null || path.isBlank()) ? "" : pathParserService.normalizePath(path);
+        PathComponents pathComponents = pathParserService.parsePath(path);
+        String folderName = pathComponents.path();
 
-        if (!normalPath.isEmpty() && !minioStorageService.exists(normalPath)) {
-            throw new ResourceNotFoundException("Folder not found: " + path);
+        if (!folderName.isEmpty()) {
+            MinioUtils.handleMinioException(
+                    () -> minioStorageService.getStatObject(folderName),
+                    "Folder not found: " + path
+            );
         }
 
         List<ResourceResponseDto> resources = new ArrayList<>();
-        var results = minioStorageService.listDirectoryItems(pathParserService.normalizePath(path), false);
+        var results = minioStorageService.listDirectoryItems(folderName, false);
 
         for (Result<Item> result : results) {
-            Item item = MinioUtils.handleMinioException(result::get, "Failed to read directory item: " + normalPath);
-            PathComponents pathComponents = pathParserService.parsePath(item.objectName());
-            ResourceResponseDto resourceResponseDto = ResourceResponseDtoFactory.createDtoFromItemAndPathComponents(item, pathComponents);
+            Item item = MinioUtils.handleMinioException(result::get, "Failed to read directory item: " + folderName);
+            PathComponents itemPathComponents = pathParserService.parsePath(item.objectName());
+            ResourceResponseDto resourceResponseDto = ResourceResponseDtoFactory.createDtoFromItemAndPathComponents(item, itemPathComponents);
             resources.add(resourceResponseDto);
         }
-
         return resources;
     }
 

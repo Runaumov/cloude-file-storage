@@ -3,7 +3,6 @@ package com.runaumov.spring.cloudfilestorage.service;
 import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDtoFactory;
-import com.runaumov.spring.cloudfilestorage.exception.ResourceNotFoundException;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,20 +16,23 @@ public class ResourceInfoService {
 
     public ResourceResponseDto getResourceInfo(String path) {
         PathComponents pathComponents = pathParserService.parsePath(path);
+        String folderName = pathComponents.path();
 
-        if (isDirectory(path)) {
+        StatObjectResponse statObject = MinioUtils.handleMinioException(
+                () -> minioStorageService.getStatObject(folderName),
+                "Resource not found: " + path
+        );
+
+        if (isDirectoryNew(statObject)) {
             return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
-        } else if (minioStorageService.exists(path)) {
-            return MinioUtils.handleMinioException(() -> {
-                StatObjectResponse statObject = minioStorageService.getStatObject(path);
-                return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
-            }, "Failed to get resource info");
         } else {
-            throw new ResourceNotFoundException("Resource not found: " + path);
+            return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
         }
     }
 
-    private boolean isDirectory(String path) {
-        return path.endsWith("/") || minioStorageService.listDirectoryItems(path, false).iterator().hasNext();
+    // TODO : rename
+    private boolean isDirectoryNew(StatObjectResponse statObject) {
+        return "application/x-directory".equals(statObject.contentType())
+                || statObject.object().endsWith("/");
     }
 }

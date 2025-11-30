@@ -7,12 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 @Service
 @RequiredArgsConstructor
@@ -99,22 +95,17 @@ public class MinioStorageService {
                         .build());
     }
 
-
-    public boolean exists(String path) {
-        try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(bucketName)
-                            .prefix(path)
-                            .maxKeys(1)
-                            .build()
-            );
-            return results.iterator().hasNext();
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean objectExist(String path) {
+        Iterable<Result<Item>> result = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(bucketName)
+                        .prefix(path)
+                        .maxKeys(1)
+                        .build());
+        return result.iterator().hasNext();
     }
 
+    // TODO : переписать
     public boolean isDirectory(String path) {
         if (path.endsWith("/")) {
             return true;

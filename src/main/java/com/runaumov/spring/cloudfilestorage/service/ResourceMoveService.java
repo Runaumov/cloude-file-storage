@@ -62,7 +62,7 @@ public class ResourceMoveService {
         String pathWithSuffix = path;
         int copyIndex = 1;
 
-        while (minioStorageService.exists(pathWithSuffix)) {
+        while (checkObjectExists(pathWithSuffix)) {
             pathWithSuffix = appendCopySuffix(path, copyIndex);
             copyIndex++;
         }
@@ -76,5 +76,12 @@ public class ResourceMoveService {
         } else {
             return path + "_copy" + copyIndex;
         }
+    }
+
+    private boolean checkObjectExists(String path) {
+        return MinioUtils.handleMinioException(
+                () -> minioStorageService.objectExist(path),
+                "Failed to check object existence: " + path
+        );
     }
 }
