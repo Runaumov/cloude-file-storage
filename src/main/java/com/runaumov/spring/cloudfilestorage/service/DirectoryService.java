@@ -23,7 +23,7 @@ public class DirectoryService {
     private final PathParserService pathParserService;
 
     public List<ResourceResponseDto> getDirectoryInfo(String path) {
-        String normalizedPath = pathParserService.normalizePath(path);
+        String normalizedPath = pathParserService.normalizePath(path); // tODO возможно стоит убрать, если мы исключаем отправку некорректного пути
 
         if (!normalizedPath.isEmpty()) {
             MinioValidator.verificationDirectory(

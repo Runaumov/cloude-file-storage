@@ -37,4 +37,8 @@ public class PathParserService {
         return path.endsWith("/") ? path : path + "/";
     }
 
+    public boolean isDirectory(String path) {
+        return path != null && path.endsWith("/");
+    }
+
 }

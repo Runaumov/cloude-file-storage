@@ -17,7 +17,6 @@ import java.util.zip.ZipOutputStream;
 public class ResourceDownloadService {
 
     private final MinioStorageService minioStorageService;
-    private final PathParserService pathParserService;
 
     public byte[] resourceDownload(String path) {
 
@@ -84,10 +83,5 @@ public class ResourceDownloadService {
             inputStream.transferTo(zipOut);
             zipOut.closeEntry();
         }
-    }
-
-    private boolean isDirectoryNew(StatObjectResponse statObject) {
-        return "application/x-directory".equals(statObject.contentType())
-                || statObject.object().endsWith("/");
     }
 }

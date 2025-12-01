@@ -5,13 +5,18 @@
 2. Насколько правильно делать фабрику бином? (помечать ее @Component и инжектить в нее сервис). Вроде это плохо, т.к. слои протекают друг в друга. У меня в проекте сделано по-другому, но хотелось бы узнать
 3. Использование null в фабрике
 4. Почему-то на фронте странно ототбражаются ошибки, я с этим ничего не стал делать, у меня API кидает исключения нормально
-5. Идемпотентный Delete - это норм?
+5. Идемпотентный Delete, в тз он строгий.
 
 Что еще нужно прочекать и исправить:
+DirectoryService +
 ResourceDeleteService +
-ResourceDownloadService
+ResourceDownloadService -
 ResourceInfoService +
-ResourceMoveService
-ResourceSearchService
-DownloadController
+ResourceMoveService -
+ResourceSearchService -
+UploadFileService -
+Создание пустой папки-
+DownloadController -
 две куки с сессиями
+валидация реквеста
+файлы для разныъ юзеров - они делят одну папку

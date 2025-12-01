@@ -4,6 +4,7 @@ import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDtoFactory;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
+import com.runaumov.spring.cloudfilestorage.util.MinioValidator;
 import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,23 +17,21 @@ public class ResourceInfoService {
 
     public ResourceResponseDto getResourceInfo(String path) {
         PathComponents pathComponents = pathParserService.parsePath(path);
-        String folderName = pathComponents.path();
 
-        StatObjectResponse statObject = MinioUtils.handleMinioException(
-                () -> minioStorageService.getStatObject(folderName),
-                "Resource not found: " + path
-        );
-
-        if (isDirectoryNew(statObject)) {
+        if (pathParserService.isDirectory(path)) {
+            MinioValidator.verificationDirectory(
+                    path,
+                    () -> minioStorageService.getStatObject(path),
+                    () -> minioStorageService.listDirectoryItems(path, false),
+                    "Folder not found: " + path
+            );
             return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
         } else {
+            StatObjectResponse statObject = MinioUtils.handleMinioException(
+                    () -> minioStorageService.getStatObject(path),
+                    "File not found: " + path
+            );
             return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
         }
-    }
-
-    // TODO : rename
-    private boolean isDirectoryNew(StatObjectResponse statObject) {
-        return "application/x-directory".equals(statObject.contentType())
-                || statObject.object().endsWith("/");
     }
 }
