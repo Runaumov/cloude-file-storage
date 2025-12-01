@@ -50,6 +50,8 @@ public class DirectoryService {
         PathComponents pathComponents = pathParserService.parsePath(path);
         String folderName = pathComponents.path();
 
+        // TODO : проверить
+
         MinioUtils.handleMinioException(() -> {
             minioStorageService.putEmptyItem(folderName);
             return null;
