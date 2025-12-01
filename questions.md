@@ -10,7 +10,7 @@
 Что еще нужно прочекать и исправить:
 DirectoryService +
 ResourceDeleteService +
-ResourceDownloadService -
+ResourceDownloadService +
 ResourceInfoService +
 ResourceMoveService -
 ResourceSearchService -

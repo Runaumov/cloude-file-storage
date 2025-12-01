@@ -1,9 +1,8 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
-import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
+import com.runaumov.spring.cloudfilestorage.util.MinioValidator;
 import io.minio.Result;
-import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,12 +16,19 @@ import java.util.zip.ZipOutputStream;
 public class ResourceDownloadService {
 
     private final MinioStorageService minioStorageService;
+    private final PathParserService pathParserService;
 
     public byte[] resourceDownload(String path) {
-
-        if (path.endsWith("/")) {
+        if (pathParserService.isDirectory(path)) {
+            MinioValidator.verificationDirectory(
+                    path,
+                    () -> minioStorageService.getStatObject(path),
+                    () -> minioStorageService.listDirectoryItems(path, false),
+                    "Folder not found: " + path);
             return downloadDirectory(path);
         } else {
+            MinioUtils.handleMinioException(() -> minioStorageService.getStatObject(path),
+            "File not found: " + path);
             return downloadFile(path);
         }
     }
@@ -40,35 +46,10 @@ public class ResourceDownloadService {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
             try (ZipOutputStream zipOut = new ZipOutputStream(byteArrayOutputStream)) {
-                Iterable<Result<Item>> items = minioStorageService.listDirectoryItems(path, true);
-
-                boolean hasEntries = false;
-
-                for (Result<Item> result : items) {
-                    Item item = result.get();
-                    String objectName = item.objectName();
-
-                    String relativePath = objectName.substring(path.length());
-                    if (relativePath.startsWith("/")) {
-                        relativePath = relativePath.substring(1);
-                    }
-
-                    if (objectName.endsWith("/")) {
-                        ZipEntry entry = new ZipEntry(relativePath + "/");
-                        zipOut.putNextEntry(entry);
-                        zipOut.closeEntry();
-                        hasEntries = true;
-                        continue;
-                    }
-
-                    addObjectToZip(objectName, relativePath, zipOut);
-                    hasEntries = true;
-                }
-
-                if (!hasEntries) {
-                    ZipEntry emptyEntry = new ZipEntry(".empty");
-                    zipOut.putNextEntry(emptyEntry);
-                    zipOut.closeEntry();
+                if (hasItems(path)) {
+                    addItemsToZip(path, zipOut);
+                } else {
+                    addEmptyDirectoryMarker(zipOut);
                 }
             }
 
@@ -76,12 +57,52 @@ public class ResourceDownloadService {
         }, "Failed to download directory: " + path);
     }
 
-    private void addObjectToZip(String objectName, String relativePath, ZipOutputStream zipOut) throws Exception {
+    private boolean hasItems(String path) throws Exception {
+        return minioStorageService.listDirectoryItems(path, false).iterator().hasNext();
+    }
+
+    private void addItemsToZip(String path, ZipOutputStream zipOut) throws Exception {
+        Iterable<Result<Item>> items = minioStorageService.listDirectoryItems(path, true);
+
+        for (Result<Item> result : items) {
+            Item item = result.get();
+            String objectName = item.objectName();
+            String relativePath = calculateRelativePath(path, objectName);
+
+            if (pathParserService.isDirectory(objectName)) {
+                addDirectoryToZip(relativePath, zipOut);
+            } else {
+                addFileToZip(objectName, relativePath, zipOut);
+            }
+        }
+    }
+
+    private String calculateRelativePath(String basePath, String objectName) {
+        String relativePath = objectName.substring(basePath.length());
+        if (relativePath.startsWith("/")) {
+            relativePath = relativePath.substring(1);
+        }
+        return relativePath;
+    }
+
+    private void addDirectoryToZip(String relativePath, ZipOutputStream zipOut) throws Exception {
+        ZipEntry entry = new ZipEntry(relativePath);
+        zipOut.putNextEntry(entry);
+        zipOut.closeEntry();
+    }
+
+    private void addFileToZip(String objectName, String relativePath, ZipOutputStream zipOut) throws Exception {
         try (InputStream inputStream = minioStorageService.getObjectStream(objectName)) {
             ZipEntry entry = new ZipEntry(relativePath);
             zipOut.putNextEntry(entry);
             inputStream.transferTo(zipOut);
             zipOut.closeEntry();
         }
+    }
+
+    private void addEmptyDirectoryMarker(ZipOutputStream zipOut) throws Exception {
+        ZipEntry emptyEntry = new ZipEntry(".empty");
+        zipOut.putNextEntry(emptyEntry);
+        zipOut.closeEntry();
     }
 }
