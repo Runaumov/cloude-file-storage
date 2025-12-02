@@ -12,7 +12,7 @@ DirectoryService +
 ResourceDeleteService +
 ResourceDownloadService +
 ResourceInfoService +
-ResourceMoveService -
+ResourceMoveService +
 ResourceSearchService -
 UploadFileService -
 Создание пустой папки-
