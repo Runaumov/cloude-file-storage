@@ -3,7 +3,10 @@ package com.runaumov.spring.cloudfilestorage.service;
 import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDtoFactory;
+import com.runaumov.spring.cloudfilestorage.exception.InvalidPathException;
+import com.runaumov.spring.cloudfilestorage.exception.ResourceAlreadyExistsException;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
+import com.runaumov.spring.cloudfilestorage.util.MinioValidator;
 import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,45 +21,44 @@ public class UploadFileService {
     private final PathParserService pathParserService;
 
     public List<ResourceResponseDto> uploadFiles(String path, List<MultipartFile> files) {
+
+        if (!path.isEmpty()) {
+            MinioValidator.verificationDirectory(
+                    path,
+                    () -> minioStorageService.getStatObject(path),
+                    () -> minioStorageService.listDirectoryItems(path, false),
+                    "Folder not found: " + path
+            );
+        }
+
         List<ResourceResponseDto> uploadFiles = new ArrayList<>();
-        PathComponents pathComponents = pathParserService.parsePath(path);
-        String folderName = pathComponents.path();
 
         for (MultipartFile file : files) {
-            String objectOriginalName = folderName + file.getOriginalFilename();
-            String finalName = resolveConflict(objectOriginalName);
+            String objectOriginalName = file.getOriginalFilename();
 
-            ResourceResponseDto dto= MinioUtils.handleMinioException(() -> {
-                minioStorageService.putObject(finalName, file);
-                PathComponents itemPathComponents = pathParserService.parsePath(finalName);
-                StatObjectResponse statObject = minioStorageService.getStatObject(finalName);
-                return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, itemPathComponents);
-            }, "Failed to upload resource");
+            if (objectOriginalName == null || objectOriginalName.isEmpty()) {
+                throw new InvalidPathException("File name cannot be empty");
+            }
 
+            String targetPath = path + objectOriginalName;
+
+            if (checkObjectExists(targetPath)) {
+                throw new ResourceAlreadyExistsException("File already exists: " + path);
+            }
+
+            ResourceResponseDto dto = uploadFile(file, targetPath);
             uploadFiles.add(dto);
         }
         return uploadFiles;
     }
 
-    // TODO : дублиование
-    private String resolveConflict(String path) {
-        String pathWithSuffix = path;
-        int copyIndex = 1;
-
-        while (checkObjectExists(pathWithSuffix)) {
-            pathWithSuffix = appendCopySuffix(path, copyIndex);
-            copyIndex++;
-        }
-        return pathWithSuffix;
-    }
-
-    private String appendCopySuffix(String path, int copyIndex) {
-        int dotIndex = path.lastIndexOf('.');
-        if (dotIndex > 0) {
-            return path.substring(0, dotIndex) + "_copy" + copyIndex + path.substring(dotIndex);
-        } else {
-            return path + "_copy" + copyIndex;
-        }
+    private ResourceResponseDto uploadFile(MultipartFile file, String path) {
+        return MinioUtils.handleMinioException(() -> {
+            minioStorageService.putObject(path, file);
+            PathComponents pathComponents = pathParserService.parsePath(path);
+            StatObjectResponse statObjectResponse = minioStorageService.getStatObject(path);
+            return ResourceResponseDtoFactory.createDtoFromStatObject(statObjectResponse, pathComponents);
+        }, "Failed to upload file: " + path);
     }
 
     private boolean checkObjectExists(String path) {

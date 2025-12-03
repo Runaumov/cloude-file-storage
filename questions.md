@@ -13,10 +13,11 @@ ResourceDeleteService +
 ResourceDownloadService +
 ResourceInfoService +
 ResourceMoveService +-
-ResourceSearchService -
-UploadFileService -
+ResourceSearchService +
+UploadFileService +
 Создание пустой папки-
 DownloadController -
 две куки с сессиями
 валидация реквеста
 файлы для разныъ юзеров - они делят одну папку
+тесты

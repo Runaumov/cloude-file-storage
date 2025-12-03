@@ -6,7 +6,11 @@ import io.minio.messages.Item;
 
 public class MinioValidator {
 
-    public static void verificationDirectory(String path, MinioCall<?> statObjectCall, MinioCall<Iterable<Result<Item>>> listItemsCall, String errorMessage) {
+    public static void verificationDirectory(
+            String path,
+            MinioCall<?> statObjectCall,
+            MinioCall<Iterable<Result<Item>>> listItemsCall,
+            String errorMessage) {
         try {
             MinioUtils.handleMinioException(statObjectCall, errorMessage);
         } catch (ResourceNotFoundException e) {
