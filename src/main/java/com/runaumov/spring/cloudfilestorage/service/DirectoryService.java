@@ -4,6 +4,7 @@ import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDirectoryDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDtoFactory;
+import com.runaumov.spring.cloudfilestorage.exception.ResourceAlreadyExistsException;
 import com.runaumov.spring.cloudfilestorage.exception.ResourceNotFoundException;
 import com.runaumov.spring.cloudfilestorage.model.ResourceType;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
@@ -47,18 +48,40 @@ public class DirectoryService {
     }
 
     public ResourceResponseDto createEmptyDirectory(String path) {
-        PathComponents pathComponents = pathParserService.parsePath(path);
-        String folderName = pathComponents.path();
 
-        // TODO : проверить
+        if (checkDirectoryExist(path)) {
+            throw new ResourceAlreadyExistsException("Resource already exists: " + path);
+        }
+
+        PathComponents pathComponents = pathParserService.parsePath(path);
+        String parentPath = pathComponents.path();
+
+        if (!parentPath.isEmpty()) {
+            MinioValidator.verificationDirectory(
+                    parentPath,
+                    () -> minioStorageService.getStatObject(parentPath),
+                    () -> minioStorageService.listDirectoryItems(parentPath, false),
+                    "Folder not found: " + parentPath);
+        }
 
         MinioUtils.handleMinioException(() -> {
-            minioStorageService.putEmptyItem(folderName);
+            minioStorageService.putEmptyItem(path);
             return null;
-        }, "Failed to create directory: " + folderName);
+        }, "Failed to create directory: " + path);
 
         return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
     }
 
+    private boolean checkDirectoryExist(String path) {
+        try {
+            MinioUtils.handleMinioException(() -> minioStorageService.getStatObject(path),
+                    "Failed to check directory existence: " + path);
+            return true;
+        } catch (ResourceNotFoundException e) {
+            return MinioUtils.handleMinioException(
+                    () -> minioStorageService.listDirectoryItems(path, false).iterator().hasNext(),
+                    "Failed to check directory content: " + path);
+        }
 
+    }
 }
