@@ -17,7 +17,9 @@ ResourceSearchService +
 UploadFileService +
 Создание пустой папки +
 DownloadController +
-две куки с сессиями
+две куки с сессиями +
 файлы для разныъ юзеров - они делят одну папку
 валидация реквеста
 тесты
+Пароли с Bcrypt
+Swagger

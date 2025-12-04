@@ -6,27 +6,28 @@ import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
 import com.runaumov.spring.cloudfilestorage.exception.UsernameAlreadyExistException;
 import com.runaumov.spring.cloudfilestorage.mapper.UserEntityMapper;
 import com.runaumov.spring.cloudfilestorage.repository.UserRepository;
+import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
     private final UserEntityMapper userEntityMapper;
-
-    @Autowired
-    public AuthService(UserRepository userRepository, UserEntityMapper userEntityMapper) {
-        this.userRepository = userRepository;
-        this.userEntityMapper = userEntityMapper;
-    }
+    private final UserPathService userPathService;
+    private final MinioStorageService minioStorageService;
 
     @Transactional
     public UserEntityResponseDto registerUser(UserEntityRequestDto dto) {
         try {
             UserEntity savedUser = userRepository.save(userEntityMapper.toUserEntity(dto));
+            createUserRootFolder(savedUser.getId());
             return userEntityMapper.toUserEntityResponseDto(savedUser);
         } catch (DataIntegrityViolationException e) {
             if (isUniqueUsernameViolation(e)) {
@@ -45,5 +46,13 @@ public class AuthService {
             cause = cause.getCause();
         }
         return false;
+    }
+
+    private void createUserRootFolder(Long userId) {
+        String userPrefix = userPathService.getUserPrefix(userId);
+
+        MinioUtils.handleMinioException(() -> {
+            minioStorageService.putEmptyItem(userPrefix); return null;
+            }, "Failed to create user root folder");
     }
 }
