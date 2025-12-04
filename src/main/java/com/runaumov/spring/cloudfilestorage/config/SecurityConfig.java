@@ -67,7 +67,7 @@ public class SecurityConfig {
                             }
                         })
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
+                        .deleteCookies("SESSION")
                         .permitAll())
                 .addFilterAt(jsonAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session

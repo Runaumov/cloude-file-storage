@@ -16,8 +16,8 @@ ResourceMoveService +-
 ResourceSearchService +
 UploadFileService +
 Создание пустой папки +
-DownloadController -
+DownloadController +
 две куки с сессиями
-валидация реквеста
 файлы для разныъ юзеров - они делят одну папку
+валидация реквеста
 тесты
