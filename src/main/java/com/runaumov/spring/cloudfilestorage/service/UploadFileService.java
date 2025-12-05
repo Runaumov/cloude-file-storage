@@ -18,15 +18,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UploadFileService {
     private final MinioStorageService minioStorageService;
+    private final AuthenticationService authenticationService;
+    private final UserPathService userPathService;
     private final PathParserService pathParserService;
 
     public List<ResourceResponseDto> uploadFiles(String path, List<MultipartFile> files) {
+        Long userId = authenticationService.getCurrentUserId();
+        String userPath = userPathService.addUserPrefix(userId, path);
 
-        if (!path.isEmpty()) {
+        if (!userPath.equals(userPathService.getUserPrefix(userId))) {
             MinioValidator.verificationDirectory(
-                    path,
-                    () -> minioStorageService.getStatObject(path),
-                    () -> minioStorageService.listDirectoryItems(path, false),
+                    userPath,
+                    () -> minioStorageService.getStatObject(userPath),
+                    () -> minioStorageService.listDirectoryItems(userPath, false),
                     "Folder not found: " + path
             );
         }
@@ -40,22 +44,25 @@ public class UploadFileService {
                 throw new InvalidPathException("File name cannot be empty");
             }
 
-            String targetPath = path + objectOriginalName;
+            String targetUserPath = userPath + objectOriginalName;
 
-            if (checkObjectExists(targetPath)) {
+            if (checkObjectExists(targetUserPath)) {
                 throw new ResourceAlreadyExistsException("File already exists: " + path);
             }
 
-            ResourceResponseDto dto = uploadFile(file, targetPath);
+            ResourceResponseDto dto = uploadFile(file, targetUserPath, userId);
             uploadFiles.add(dto);
         }
         return uploadFiles;
     }
 
-    private ResourceResponseDto uploadFile(MultipartFile file, String path) {
+    private ResourceResponseDto uploadFile(MultipartFile file, String path, Long userId) {
         return MinioUtils.handleMinioException(() -> {
             minioStorageService.putObject(path, file);
-            PathComponents pathComponents = pathParserService.parsePath(path);
+
+            String pathWithoutPrefix = userPathService.removeUserPrefix(userId, path);
+            PathComponents pathComponents = pathParserService.parsePath(pathWithoutPrefix);
+
             StatObjectResponse statObjectResponse = minioStorageService.getStatObject(path);
             return ResourceResponseDtoFactory.createDtoFromStatObject(statObjectResponse, pathComponents);
         }, "Failed to upload file: " + path);
