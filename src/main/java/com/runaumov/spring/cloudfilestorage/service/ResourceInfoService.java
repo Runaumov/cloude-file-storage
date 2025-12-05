@@ -13,24 +13,36 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ResourceInfoService {
     private final MinioStorageService minioStorageService;
+    private final AuthenticationService authenticationService;
+    private final UserPathService userPathService;
     private final PathParserService pathParserService;
 
     public ResourceResponseDto getResourceInfo(String path) {
-        PathComponents pathComponents = pathParserService.parsePath(path);
 
-        if (pathParserService.isDirectory(path)) {
-            MinioValidator.verificationDirectory(
-                    path,
-                    () -> minioStorageService.getStatObject(path),
-                    () -> minioStorageService.listDirectoryItems(path, false),
-                    "Folder not found: " + path
-            );
+        Long userId = authenticationService.getCurrentUserId();
+        String userPath = userPathService.addUserPrefix(userId, path);
+
+        if (pathParserService.isDirectory(userPath)) {
+            if (!userPath.equals(userPathService.getUserPrefix(userId))) {
+                MinioValidator.verificationDirectory(
+                        userPath,
+                        () -> minioStorageService.getStatObject(userPath),
+                        () -> minioStorageService.listDirectoryItems(userPath, false),
+                        "Folder not found: " + path
+                );
+            }
+
+            String pathWithoutPrefix = userPathService.removeUserPrefix(userId, userPath);
+            PathComponents pathComponents = pathParserService.parsePath(pathWithoutPrefix);
             return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
         } else {
             StatObjectResponse statObject = MinioUtils.handleMinioException(
-                    () -> minioStorageService.getStatObject(path),
+                    () -> minioStorageService.getStatObject(userPath),
                     "File not found: " + path
             );
+            String pathWithoutPrefix = userPathService.removeUserPrefix(userId, userPath);
+            PathComponents pathComponents = pathParserService.parsePath(pathWithoutPrefix);
+
             return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
         }
     }
