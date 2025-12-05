@@ -16,45 +16,62 @@ import org.springframework.stereotype.Service;
 public class ResourceMoveService {
     private final MinioStorageService minioStorageService;
     private final PathParserService pathParserService;
+    private final AuthenticationService authenticationService;
+    private final UserPathService userPathService;
 
     public ResourceResponseDto resourceMove(String oldPath, String newPath) {
 
-        checkOldNewPaths(oldPath, newPath);
+        Long userId = authenticationService.getCurrentUserId();
+
+        String oldUserPath = userPathService.addUserPrefix(userId, oldPath);
+        String newUserPath = userPathService.addUserPrefix(userId, newPath);
+
+        checkOldNewPaths(oldUserPath, newUserPath, oldPath, newPath);
 
         return MinioUtils.handleMinioException(() -> {
-            if (!pathParserService.isDirectory(oldPath)) {
-                MinioUtils.handleMinioException(() -> minioStorageService.getStatObject(oldPath),
+            if (!pathParserService.isDirectory(oldUserPath)) {
+
+                MinioUtils.handleMinioException(() -> minioStorageService.getStatObject(oldUserPath),
                         "File not found: " + oldPath);
 
-                String targetPath = resolveConflict(newPath);
+                String targetUserPath = resolveConflict(newUserPath);
 
-                minioStorageService.copyObject(targetPath, oldPath);
-                minioStorageService.deleteItemForPath(oldPath);
+                minioStorageService.copyObject(targetUserPath, oldUserPath);
+                minioStorageService.deleteItemForPath(oldUserPath);
 
-                StatObjectResponse statObject = minioStorageService.getStatObject(targetPath);
-                PathComponents pathComponents = pathParserService.parsePath(targetPath);
+                StatObjectResponse statObject = minioStorageService.getStatObject(targetUserPath);
+                String targetPathWithoutPrefix = userPathService.removeUserPrefix(userId, targetUserPath);
+                PathComponents pathComponents = pathParserService.parsePath(targetPathWithoutPrefix);
 
                 return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
             } else {
                 MinioValidator.verificationDirectory(
-                        oldPath,
-                        () -> minioStorageService.getStatObject(oldPath),
-                        () -> minioStorageService.listDirectoryItems(oldPath, false),
+                        oldUserPath,
+                        () -> minioStorageService.getStatObject(oldUserPath),
+                        () -> minioStorageService.listDirectoryItems(oldUserPath, false),
                         "Folder not found: " + oldPath);
 
-                var results = minioStorageService.listDirectoryItems(oldPath, true);
+                String targetBasePath = resolveConflict(newUserPath);
+                var results = minioStorageService.listDirectoryItems(oldUserPath, true);
 
                 for (Result<Item> result : results) {
                     Item item = result.get();
                     String oldKey = item.objectName();
-                    String newKeyBase = newPath + oldKey.substring(oldPath.length());
-                    String newKey = resolveConflict(newKeyBase);
+                    String relativePath = oldKey.substring(oldUserPath.length());
+                    String newKey = targetBasePath + relativePath;
 
                     minioStorageService.copyObject(newKey, oldKey);
                     minioStorageService.deleteItemForPath(oldKey);
                 }
 
-                PathComponents pathComponents = pathParserService.parsePath(newPath);
+                try {
+                    minioStorageService.deleteItemForPath(oldUserPath);
+                } catch (Exception ignored) {
+                }
+
+                String targetPathWithoutPrefix = userPathService.removeUserPrefix(userId, targetBasePath);
+                PathComponents pathComponents = pathParserService.parsePath(targetPathWithoutPrefix);
+
                 return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
             }
         }, "Failed to move resources from: " + oldPath + " to: " + newPath);
@@ -91,14 +108,26 @@ public class ResourceMoveService {
         );
     }
 
-    private void checkOldNewPaths(String oldPath, String newPath) {
-        if (pathParserService.isDirectory(oldPath)) {
-            if (oldPath.equals(newPath)) {
-                throw new InvalidPathException("Cannot move directory into itself: " + oldPath);
-            }
-            if (newPath.startsWith(oldPath)) {
+    private void checkOldNewPaths(String oldUserPath, String newUserPath, String oldPath, String newPath) {
+        if (oldUserPath.equals(newUserPath)) {
+            throw new InvalidPathException("Source and destination paths are the same: " + oldPath);
+        }
+        if (pathParserService.isDirectory(oldUserPath)) {
+            if (newUserPath.startsWith(oldUserPath)) {
                 throw new InvalidPathException(
                         "Cannot move directory into its own subdirectory: " + newPath
+                );
+            }
+
+            if (!pathParserService.isDirectory(newUserPath)) {
+                throw new InvalidPathException(
+                        "Cannot move directory to a file path: " + newPath
+                );
+            }
+        } else {
+            if (pathParserService.isDirectory(newUserPath)) {
+                throw new InvalidPathException(
+                        "Cannot move file to a directory path: " + newPath
                 );
             }
         }
