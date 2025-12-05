@@ -19,18 +19,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ResourceSearchService {
     private final MinioStorageService minioStorageService;
+    private final AuthenticationService authenticationService;
+    private final UserPathService userPathService;
     private final PathParserService pathParserService;
 
     public List<ResourceResponseDto> searchResource(String query) {
 
+        Long userId = authenticationService.getCurrentUserId();
+        String userPrefix = userPathService.getUserPrefix(userId);
+
         return MinioUtils.handleMinioException(() -> {
-            Iterable<Result<Item>> results = minioStorageService.listDirectoryItems("", true);
+            Iterable<Result<Item>> results = minioStorageService.listDirectoryItems(userPrefix, true);
             List<ResourceResponseDto> foundResources = new ArrayList<>();
 
             for (Result<Item> result : results) {
                 Item item = result.get();
                 String foundPath = item.objectName();
-                PathComponents pathComponents = pathParserService.parsePath(foundPath);
+
+                String pathWithoutPrefix = userPathService.removeUserPrefix(userId, foundPath);
+                PathComponents pathComponents = pathParserService.parsePath(pathWithoutPrefix);
 
                 if (matchesQuery(pathComponents.name(), query)) {
                     ResourceResponseDto dto = ResourceResponseDtoFactory.createDtoFromItemAndPathComponents(item, pathComponents);
