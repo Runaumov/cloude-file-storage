@@ -1,5 +1,6 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
+import com.runaumov.spring.cloudfilestorage.dto.UserSessionDto;
 import com.runaumov.spring.cloudfilestorage.exception.UserUnautorizedException;
 import com.runaumov.spring.cloudfilestorage.security.UserEntityDetails;
 import org.springframework.security.core.Authentication;
@@ -19,16 +20,9 @@ public class AuthenticationService {
 
         Object principal = authentication.getPrincipal();
 
-        if (principal instanceof UserDetails userDetails) {
-            return extractUserId(userDetails);
+        if (principal instanceof UserSessionDto userSessionDto) {
+            return userSessionDto.getId();
         }
         throw new UserUnautorizedException("User not authenticated");
-    }
-
-    private Long extractUserId(UserDetails userDetails) {
-        if (userDetails instanceof UserEntityDetails) {
-            return ((UserEntityDetails) userDetails).getId();
-        }
-        throw new UserUnautorizedException("Cannot extract user ID");
     }
 }

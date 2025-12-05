@@ -28,7 +28,7 @@ public class UserEntityDetails implements UserDetails {
         return this.userEntity.getUsername();
     }
 
-    public long getId() {
+    public Long getId() {
         return this.userEntity.getId();
     }
 

@@ -21,26 +21,31 @@ import java.util.List;
 public class DirectoryService {
 
     private final MinioStorageService minioStorageService;
+    private final AuthenticationService authenticationService;
+    private final UserPathService userPathService;
     private final PathParserService pathParserService;
 
     public List<ResourceResponseDto> getDirectoryInfo(String path) {
-        String normalizedPath = pathParserService.normalizePath(path); // tODO возможно стоит убрать, если мы исключаем отправку некорректного пути
 
-        if (!normalizedPath.isEmpty()) {
+        Long userId = authenticationService.getCurrentUserId();
+        String userPath = userPathService.addUserPrefix(userId, path);
+
+        if (!userPath.equals(userPathService.getUserPrefix(userId))) {
             MinioValidator.verificationDirectory(
-                    normalizedPath,
-                    () -> minioStorageService.getStatObject(normalizedPath),
-                    () -> minioStorageService.listDirectoryItems(normalizedPath, false),
+                    userPath,
+                    () -> minioStorageService.getStatObject(userPath),
+                    () -> minioStorageService.listDirectoryItems(userPath, false),
                     "Folder not found: " + path
             );
         }
 
         List<ResourceResponseDto> resources = new ArrayList<>();
-        var results = minioStorageService.listDirectoryItems(normalizedPath, false);
+        var results = minioStorageService.listDirectoryItems(userPath, false);
 
         for (Result<Item> result : results) {
-            Item item = MinioUtils.handleMinioException(result::get, "Failed to read directory item: " + normalizedPath);
-            PathComponents itemPathComponents = pathParserService.parsePath(item.objectName());
+            Item item = MinioUtils.handleMinioException(result::get, "Failed to read directory item: " + path);
+            String itemPath = userPathService.removeUserPrefix(userId, item.objectName());
+            PathComponents itemPathComponents = pathParserService.parsePath(itemPath);
             ResourceResponseDto resourceResponseDto = ResourceResponseDtoFactory.createDtoFromItemAndPathComponents(item, itemPathComponents);
             resources.add(resourceResponseDto);
         }
@@ -49,27 +54,32 @@ public class DirectoryService {
 
     public ResourceResponseDto createEmptyDirectory(String path) {
 
-        if (checkDirectoryExist(path)) {
+        Long userId = authenticationService.getCurrentUserId();
+        String userPath = userPathService.addUserPrefix(userId, path);
+
+        if (checkDirectoryExist(userPath)) {
             throw new ResourceAlreadyExistsException("Resource already exists: " + path);
         }
 
-        PathComponents pathComponents = pathParserService.parsePath(path);
+        PathComponents pathComponents = pathParserService.parsePath(userPath);
         String parentPath = pathComponents.path();
 
-        if (!parentPath.isEmpty()) {
+        if (!parentPath.isEmpty() && !parentPath.equals(userPathService.getUserPrefix(userId))) {
             MinioValidator.verificationDirectory(
                     parentPath,
                     () -> minioStorageService.getStatObject(parentPath),
                     () -> minioStorageService.listDirectoryItems(parentPath, false),
-                    "Folder not found: " + parentPath);
+                    "Folder not found: " + userPathService.removeUserPrefix(userId, parentPath));
         }
 
         MinioUtils.handleMinioException(() -> {
-            minioStorageService.putEmptyItem(path);
+            minioStorageService.putEmptyItem(userPath);
             return null;
         }, "Failed to create directory: " + path);
 
-        return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
+        String pathWithoutPrefix = userPathService.removeUserPrefix(userId, pathComponents.path());
+        PathComponents userPathComponents = new PathComponents(pathWithoutPrefix, pathComponents.name());
+        return ResourceResponseDtoFactory.createDtoFromPathComponents(userPathComponents);
     }
 
     private boolean checkDirectoryExist(String path) {
@@ -82,6 +92,5 @@ public class DirectoryService {
                     () -> minioStorageService.listDirectoryItems(path, false).iterator().hasNext(),
                     "Failed to check directory content: " + path);
         }
-
     }
 }
