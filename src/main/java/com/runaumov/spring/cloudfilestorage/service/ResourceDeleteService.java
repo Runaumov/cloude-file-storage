@@ -28,7 +28,7 @@ public class ResourceDeleteService {
                 );
             }
         } else {
-            MinioUtils.handleMinioException(() -> minioStorageService.getStatObject(userPath), "Folder not found: " + path);
+            MinioUtils.handleMinioException(() -> minioStorageService.getStatObject(userPath), "File not found: " + path);
         }
 
         MinioUtils.handleMinioException(() -> {

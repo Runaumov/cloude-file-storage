@@ -16,20 +16,27 @@ import java.util.zip.ZipOutputStream;
 public class ResourceDownloadService {
 
     private final MinioStorageService minioStorageService;
+    private final AuthenticationService authenticationService;
+    private final UserPathService userPathService;
     private final PathParserService pathParserService;
 
     public byte[] resourceDownload(String path) {
-        if (pathParserService.isDirectory(path)) {
-            MinioValidator.verificationDirectory(
-                    path,
-                    () -> minioStorageService.getStatObject(path),
-                    () -> minioStorageService.listDirectoryItems(path, false),
-                    "Folder not found: " + path);
-            return downloadDirectory(path);
+
+        Long userId = authenticationService.getCurrentUserId();
+        String userPath = userPathService.addUserPrefix(userId, path);
+
+        if (pathParserService.isDirectory(userPath)) {
+            if (!userPath.equals(userPathService.getUserPrefix(userId))) {
+                MinioValidator.verificationDirectory(
+                        userPath,
+                        () -> minioStorageService.getStatObject(userPath),
+                        () -> minioStorageService.listDirectoryItems(userPath, false),
+                        "Folder not found: " + path);
+            }
+            return downloadDirectory(userPath, userId);
         } else {
-            MinioUtils.handleMinioException(() -> minioStorageService.getStatObject(path),
-            "File not found: " + path);
-            return downloadFile(path);
+            MinioUtils.handleMinioException(() -> minioStorageService.getStatObject(userPath), "File not found: " + path);
+            return downloadFile(userPath);
         }
     }
 
@@ -41,13 +48,13 @@ public class ResourceDownloadService {
         }, "Failed to download file: " + path);
     }
 
-    private byte[] downloadDirectory(String path) {
+    private byte[] downloadDirectory(String path, Long userId) {
         return MinioUtils.handleMinioException(() -> {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
             try (ZipOutputStream zipOut = new ZipOutputStream(byteArrayOutputStream)) {
                 if (hasItems(path)) {
-                    addItemsToZip(path, zipOut);
+                    addItemsToZip(path, zipOut, userId);
                 } else {
                     addEmptyDirectoryMarker(zipOut);
                 }
@@ -61,13 +68,15 @@ public class ResourceDownloadService {
         return minioStorageService.listDirectoryItems(path, false).iterator().hasNext();
     }
 
-    private void addItemsToZip(String path, ZipOutputStream zipOut) throws Exception {
+    private void addItemsToZip(String path, ZipOutputStream zipOut, Long userId) throws Exception {
         Iterable<Result<Item>> items = minioStorageService.listDirectoryItems(path, true);
 
         for (Result<Item> result : items) {
             Item item = result.get();
             String objectName = item.objectName();
-            String relativePath = calculateRelativePath(path, objectName);
+
+            String pathWithoutPrefix = userPathService.removeUserPrefix(userId, objectName);
+            String relativePath = calculateRelativePath(userPathService.removeUserPrefix(userId, path), pathWithoutPrefix);
 
             if (pathParserService.isDirectory(objectName)) {
                 addDirectoryToZip(relativePath, zipOut);
