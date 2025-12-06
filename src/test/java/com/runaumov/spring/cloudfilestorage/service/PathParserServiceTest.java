@@ -14,8 +14,8 @@ public class PathParserServiceTest {
 
         PathComponents pathComponents = pathParserService.parsePath(path);
 
-        Assertions.assertEquals("folder/", pathComponents.path());
-        Assertions.assertEquals("", pathComponents.name());
+        Assertions.assertEquals("", pathComponents.path());
+        Assertions.assertEquals("folder/", pathComponents.name());
     }
 
     @Test
@@ -24,8 +24,8 @@ public class PathParserServiceTest {
 
         PathComponents pathComponents = pathParserService.parsePath(path);
 
-        Assertions.assertEquals("folder/subfolder/", pathComponents.path());
-        Assertions.assertEquals("", pathComponents.name());
+        Assertions.assertEquals("folder/", pathComponents.path());
+        Assertions.assertEquals("subfolder/", pathComponents.name());
     }
 
     @Test

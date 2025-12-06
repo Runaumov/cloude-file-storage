@@ -1,7 +1,7 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
-import com.runaumov.spring.cloudfilestorage.AbstractServiceTest;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
+import io.minio.PutObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
 import org.junit.jupiter.api.Assertions;
@@ -29,7 +29,16 @@ public class UploadFileServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldGetResponseDto_whenFileUpload() throws Exception {
-        String objectPath = "dir";
+        String userPrefix = "user-1-files/";
+        String objectPath = "dir/";
+
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{})) {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(getTestBucketName())
+                    .object(userPrefix + objectPath)
+                    .stream(inputStream, 0, -1)
+                    .build());
+        }
 
         MockMultipartFile file1 = new MockMultipartFile(
                 "file1", "test1.txt", "text/plain", "test1".getBytes(StandardCharsets.UTF_8));
@@ -45,9 +54,10 @@ public class UploadFileServiceTest extends AbstractServiceTest {
         Assertions.assertEquals("test2.txt", result.get(1).getName());
 
         for (ResourceResponseDto dto : result) {
+            String fullPath = userPrefix + dto.getPath() + dto.getName();
             StatObjectResponse statObjectResponse = minioClient.statObject(StatObjectArgs.builder()
                     .bucket(getTestBucketName())
-                    .object(dto.getPath() + dto.getName())
+                    .object(fullPath)
                     .build());
             Assertions.assertNotNull(statObjectResponse);
             Assertions.assertTrue(statObjectResponse.size() > 0);

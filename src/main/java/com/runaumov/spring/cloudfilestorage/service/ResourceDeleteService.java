@@ -35,7 +35,7 @@ public class ResourceDeleteService {
             } else {
                 minioStorageService.deleteItemForPath(userPath);
             }
-            return null; // TODO можно убрать null
+            return null;
         }, "Failed to delete resource: " + path);
     }
 }

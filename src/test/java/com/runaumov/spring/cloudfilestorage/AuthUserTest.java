@@ -3,6 +3,7 @@ package com.runaumov.spring.cloudfilestorage;
 import com.runaumov.spring.cloudfilestorage.dto.UserEntityRequestDto;
 import com.runaumov.spring.cloudfilestorage.dto.UserSessionDto;
 import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
+import com.runaumov.spring.cloudfilestorage.repository.UserRepository;
 import com.runaumov.spring.cloudfilestorage.security.UserEntityDetails;
 import com.runaumov.spring.cloudfilestorage.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +17,7 @@ import org.springframework.mock.web.MockCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -69,17 +71,20 @@ public class AuthUserTest {
     @Test
     void shouldAuthorizedUser_whenCredentialsAreValid() throws Exception {
         String json = "{\"username\":\"testuser\",\"password\":\"password\"}";
-        authService.registerUser(new UserEntityRequestDto("testuser", "password"));
 
-        mockMvc.perform(post("/auth/sign-in").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.username").value("testuser"));
+        mockMvc.perform(post("/api/auth/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/auth/sign-in").contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("testuser"));
     }
 
     @Test
     void shouldReturn401_whenPasswordWrong() throws Exception {
         String json = "{\"username\":\"testuser\",\"password\":\"wrong\"}";
 
-        mockMvc.perform(post("/auth/sign-in").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/api/auth/sign-in").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -87,7 +92,7 @@ public class AuthUserTest {
     void shouldGetUserEntityResponseDto_whenCredentialsAreValid() throws Exception {
         String json = "{\"username\":\"testuser\",\"password\":\"password\"}";
 
-        mockMvc.perform(post("/auth/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/api/auth/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isCreated()).andExpect(jsonPath("$.username").value("testuser"));
     }
 
@@ -97,20 +102,20 @@ public class AuthUserTest {
 
         authService.registerUser(new UserEntityRequestDto("testuser", "password"));
 
-        mockMvc.perform(post("/auth/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
+        mockMvc.perform(post("/api/auth/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isConflict());
     }
 
     @Test
     void shouldReturn204_whenUserLogout() throws Exception {
-        mockMvc.perform(post("/auth/sign-out")
+        mockMvc.perform(post("/api/auth/sign-out")
                         .with(user("testuser")))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void shouldReturn401_whenUserNotAuthorized() throws Exception {
-        mockMvc.perform(post("/auth/sign-out"))
+        mockMvc.perform(post("/api/auth/sign-out"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -121,7 +126,7 @@ public class AuthUserTest {
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(sessionDto, null, List.of());
 
-        mockMvc.perform(get("/user/me")
+        mockMvc.perform(get("/api/user/me")
                         .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("username"));
@@ -129,6 +134,6 @@ public class AuthUserTest {
 
     @Test
     void shouldGet401_whenUserUnauthorized() throws Exception {
-        mockMvc.perform(get("/user/me")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/user/me")).andExpect(status().isUnauthorized());
     }
 }

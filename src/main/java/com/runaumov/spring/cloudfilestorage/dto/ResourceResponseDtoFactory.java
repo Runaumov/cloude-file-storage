@@ -7,7 +7,8 @@ import io.minio.messages.Item;
 public class ResourceResponseDtoFactory {
 
     public static ResourceResponseDto createDtoFromItemAndPathComponents(Item item, PathComponents pathComponents) {
-        ResourceType resourceType = item.isDir() ? ResourceType.DIRECTORY : ResourceType.FILE;
+        boolean isDirectory = item.isDir() || pathComponents.name().endsWith("/");
+        ResourceType resourceType = isDirectory ? ResourceType.DIRECTORY : ResourceType.FILE;
 
         return createDto(pathComponents, resourceType, item.size());
     }

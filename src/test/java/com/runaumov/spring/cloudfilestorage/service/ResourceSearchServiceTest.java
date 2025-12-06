@@ -1,6 +1,5 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
-import com.runaumov.spring.cloudfilestorage.AbstractServiceTest;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import io.minio.PutObjectArgs;
 import org.junit.jupiter.api.Assertions;
@@ -11,6 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @SpringBootTest
 @ActiveProfiles("test-service")
@@ -25,7 +25,8 @@ public class ResourceSearchServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldSearchFile_whenFileExist() throws Exception {
-        String objectPath = "directiry/file.txt";
+        String userPrefix = "user-1-files/";
+        String objectPath = userPrefix + "directory/file.txt";
         byte[] content = "test".getBytes(StandardCharsets.UTF_8);
 
         try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(content)) {
@@ -36,9 +37,15 @@ public class ResourceSearchServiceTest extends AbstractServiceTest {
                     .build());
         }
 
-//        ResourceResponseDto dto = resourceSearchService.searchResource(objectPath);
+        List<ResourceResponseDto> results = resourceSearchService.searchResource("file");
 
-//        Assertions.assertEquals("file.txt", dto.getName());
-//        Assertions.assertEquals(content.length, dto.getSize());
+        Assertions.assertNotNull(results);
+        Assertions.assertFalse(results.isEmpty());
+        Assertions.assertEquals(1, results.size());
+
+        ResourceResponseDto dto = results.get(0);
+        Assertions.assertEquals("directory/", dto.getPath());
+        Assertions.assertEquals("file.txt", dto.getName());
+        Assertions.assertEquals("FILE", dto.getType());
     }
 }

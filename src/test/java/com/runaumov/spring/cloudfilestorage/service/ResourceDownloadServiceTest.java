@@ -1,16 +1,11 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
-import com.runaumov.spring.cloudfilestorage.AbstractServiceTest;
-import io.minio.ListObjectsArgs;
 import io.minio.PutObjectArgs;
-import io.minio.Result;
-import io.minio.messages.Item;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -25,11 +20,12 @@ public class ResourceDownloadServiceTest extends AbstractServiceTest {
         this.resourceDownloadService = resourceDownloadService;
     }
 
-
     @Test
     void shouldDownloadFile_whenFileExist() throws Exception {
-        String objectPath = "file.txt";
+        String userPrefix = "user-1-files/";
+        String objectPath = userPrefix + "file.txt";
         byte[] content = "test".getBytes(StandardCharsets.UTF_8);
+
         try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(content)) {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(getTestBucketName())
@@ -39,7 +35,7 @@ public class ResourceDownloadServiceTest extends AbstractServiceTest {
                     .build());
         }
 
-        byte[] resourceDownload = resourceDownloadService.resourceDownload(objectPath);
+        byte[] resourceDownload = resourceDownloadService.resourceDownload("file.txt");
 
         Assertions.assertNotNull(resourceDownload);
         Assertions.assertArrayEquals(content, resourceDownload);

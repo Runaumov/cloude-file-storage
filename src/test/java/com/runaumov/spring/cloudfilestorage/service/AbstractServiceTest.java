@@ -1,22 +1,28 @@
-package com.runaumov.spring.cloudfilestorage;
+package com.runaumov.spring.cloudfilestorage.service;
 
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @Testcontainers
 public abstract class AbstractServiceTest {
 
     protected static final String TEST_BUCKET = "test-bucket";
+
+    @MockitoBean
+    protected UserContextService userContextService;
+
     @Autowired protected MinioClient minioClient;
 
     @Container
@@ -38,6 +44,30 @@ public abstract class AbstractServiceTest {
         if (!isBucketExist) {
             minioClient.makeBucket(MakeBucketArgs.builder().bucket(TEST_BUCKET).build());
         }
+
+        setupUserContextMocks();
+    }
+
+    protected void setupUserContextMocks() {
+        when(userContextService.addUserPrefix(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            return "user-1-files/" + path;
+        });
+
+        when(userContextService.removeUserPrefix(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            if (path.startsWith("user-1-files/")) {
+                return path.substring("user-1-files/".length());
+            }
+            return path;
+        });
+
+        when(userContextService.getUserPrefix()).thenReturn("user-1-files/");
+
+        when(userContextService.isUserRoot(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            return "user-1-files/".equals(path);
+        });
     }
 
     protected String getTestBucketName() {

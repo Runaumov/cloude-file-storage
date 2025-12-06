@@ -1,6 +1,5 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
-import com.runaumov.spring.cloudfilestorage.AbstractServiceTest;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import io.minio.PutObjectArgs;
 import org.junit.jupiter.api.Assertions;
@@ -25,7 +24,8 @@ public class ResourceInfoServiceTest extends AbstractServiceTest {
 
     @Test
     void shouldGetResourceResponseDto_whenFileExist() throws Exception {
-        String objectPath = "file.txt";
+        String userPrefix = "user-1-files/";
+        String objectPath = userPrefix + "file.txt";
         byte[] content = "test".getBytes(StandardCharsets.UTF_8);
 
         try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(content)) {
@@ -39,7 +39,7 @@ public class ResourceInfoServiceTest extends AbstractServiceTest {
             );
         }
 
-        ResourceResponseDto dto = resourceInfoService.getResourceInfo(objectPath);
+        ResourceResponseDto dto = resourceInfoService.getResourceInfo("file.txt");
 
         Assertions.assertEquals("", dto.getPath());
         Assertions.assertEquals("file.txt", dto.getName());
