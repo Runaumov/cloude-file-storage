@@ -29,8 +29,6 @@ public class MinioUtils {
             //500
             throw new CloudFileStorageApiException(errorMessage + ": MinioError: " + errorCode, e);
 
-            //TODO: 409
-
         } catch (Exception e) {
             throw new CloudFileStorageApiException(errorMessage + ": invalid path", e);
         }

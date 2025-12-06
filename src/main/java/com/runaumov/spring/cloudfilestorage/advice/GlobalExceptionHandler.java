@@ -1,6 +1,7 @@
 package com.runaumov.spring.cloudfilestorage.advice;
 
 import com.runaumov.spring.cloudfilestorage.exception.*;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,12 @@ private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHand
     public ResponseEntity<Void> handleUsernameAlreadyExists(UsernameAlreadyExistException exception) {
         logger.warn("UsernameAlreadyExistException: {}", exception.getMessage(), exception);
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    }
+
+    @ExceptionHandler({ConstraintViolationException.class})
+    public ResponseEntity<Void> handleConstraintViolation(ConstraintViolationException exception) {
+        logger.warn("ConstraintViolationException: {}", exception.getMessage(), exception);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
     @ExceptionHandler({CloudFileStorageApiException.class})
