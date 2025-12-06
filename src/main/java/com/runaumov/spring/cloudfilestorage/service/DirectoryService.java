@@ -1,12 +1,10 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
 import com.runaumov.spring.cloudfilestorage.dto.PathComponents;
-import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDirectoryDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
 import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDtoFactory;
 import com.runaumov.spring.cloudfilestorage.exception.ResourceAlreadyExistsException;
 import com.runaumov.spring.cloudfilestorage.exception.ResourceNotFoundException;
-import com.runaumov.spring.cloudfilestorage.model.ResourceType;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import com.runaumov.spring.cloudfilestorage.util.MinioValidator;
 import io.minio.Result;
@@ -21,16 +19,13 @@ import java.util.List;
 public class DirectoryService {
 
     private final MinioStorageService minioStorageService;
-    private final AuthenticationService authenticationService;
-    private final UserPathService userPathService;
     private final PathParserService pathParserService;
+    private final UserContextService userContextService;
 
     public List<ResourceResponseDto> getDirectoryInfo(String path) {
+        String userPath = userContextService.addUserPrefix(path);
 
-        Long userId = authenticationService.getCurrentUserId();
-        String userPath = userPathService.addUserPrefix(userId, path);
-
-        if (!userPath.equals(userPathService.getUserPrefix(userId))) {
+        if (!userContextService.isUserRoot(userPath)) {
             MinioValidator.verificationDirectory(
                     userPath,
                     () -> minioStorageService.getStatObject(userPath),
@@ -44,7 +39,7 @@ public class DirectoryService {
 
         for (Result<Item> result : results) {
             Item item = MinioUtils.handleMinioException(result::get, "Failed to read directory item: " + path);
-            String itemPath = userPathService.removeUserPrefix(userId, item.objectName());
+            String itemPath = userContextService.removeUserPrefix(item.objectName());
             PathComponents itemPathComponents = pathParserService.parsePath(itemPath);
             ResourceResponseDto resourceResponseDto = ResourceResponseDtoFactory.createDtoFromItemAndPathComponents(item, itemPathComponents);
             resources.add(resourceResponseDto);
@@ -54,8 +49,7 @@ public class DirectoryService {
 
     public ResourceResponseDto createEmptyDirectory(String path) {
 
-        Long userId = authenticationService.getCurrentUserId();
-        String userPath = userPathService.addUserPrefix(userId, path);
+        String userPath = userContextService.addUserPrefix(path);
 
         if (checkDirectoryExist(userPath)) {
             throw new ResourceAlreadyExistsException("Resource already exists: " + path);
@@ -64,12 +58,12 @@ public class DirectoryService {
         PathComponents pathComponents = pathParserService.parsePath(userPath);
         String parentPath = pathComponents.path();
 
-        if (!parentPath.isEmpty() && !parentPath.equals(userPathService.getUserPrefix(userId))) {
+        if (!parentPath.isEmpty() && !userContextService.isUserRoot(parentPath)) {
             MinioValidator.verificationDirectory(
                     parentPath,
                     () -> minioStorageService.getStatObject(parentPath),
                     () -> minioStorageService.listDirectoryItems(parentPath, false),
-                    "Folder not found: " + userPathService.removeUserPrefix(userId, parentPath));
+                    "Folder not found: " + userContextService.removeUserPrefix(parentPath));
         }
 
         MinioUtils.handleMinioException(() -> {
@@ -77,7 +71,7 @@ public class DirectoryService {
             return null;
         }, "Failed to create directory: " + path);
 
-        String pathWithoutPrefix = userPathService.removeUserPrefix(userId, pathComponents.path());
+        String pathWithoutPrefix = userContextService.removeUserPrefix(pathComponents.path());
         PathComponents userPathComponents = new PathComponents(pathWithoutPrefix, pathComponents.name());
         return ResourceResponseDtoFactory.createDtoFromPathComponents(userPathComponents);
     }

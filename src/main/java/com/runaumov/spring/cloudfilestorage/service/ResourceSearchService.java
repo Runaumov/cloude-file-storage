@@ -19,14 +19,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ResourceSearchService {
     private final MinioStorageService minioStorageService;
-    private final AuthenticationService authenticationService;
-    private final UserPathService userPathService;
     private final PathParserService pathParserService;
+    private final UserContextService userContextService;
 
     public List<ResourceResponseDto> searchResource(String query) {
 
-        Long userId = authenticationService.getCurrentUserId();
-        String userPrefix = userPathService.getUserPrefix(userId);
+        String userPrefix = userContextService.getUserPrefix();
 
         return MinioUtils.handleMinioException(() -> {
             Iterable<Result<Item>> results = minioStorageService.listDirectoryItems(userPrefix, true);
@@ -36,7 +34,7 @@ public class ResourceSearchService {
                 Item item = result.get();
                 String foundPath = item.objectName();
 
-                String pathWithoutPrefix = userPathService.removeUserPrefix(userId, foundPath);
+                String pathWithoutPrefix = userContextService.removeUserPrefix(foundPath);
                 PathComponents pathComponents = pathParserService.parsePath(pathWithoutPrefix);
 
                 if (matchesQuery(pathComponents.name(), query)) {

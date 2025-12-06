@@ -16,15 +16,11 @@ import org.springframework.stereotype.Service;
 public class ResourceMoveService {
     private final MinioStorageService minioStorageService;
     private final PathParserService pathParserService;
-    private final AuthenticationService authenticationService;
-    private final UserPathService userPathService;
+    private final UserContextService userContextService;
 
     public ResourceResponseDto resourceMove(String oldPath, String newPath) {
-
-        Long userId = authenticationService.getCurrentUserId();
-
-        String oldUserPath = userPathService.addUserPrefix(userId, oldPath);
-        String newUserPath = userPathService.addUserPrefix(userId, newPath);
+        String oldUserPath = userContextService.addUserPrefix(oldPath);
+        String newUserPath = userContextService.addUserPrefix(newPath);
 
         checkOldNewPaths(oldUserPath, newUserPath, oldPath, newPath);
 
@@ -40,7 +36,7 @@ public class ResourceMoveService {
                 minioStorageService.deleteItemForPath(oldUserPath);
 
                 StatObjectResponse statObject = minioStorageService.getStatObject(targetUserPath);
-                String targetPathWithoutPrefix = userPathService.removeUserPrefix(userId, targetUserPath);
+                String targetPathWithoutPrefix = userContextService.removeUserPrefix(targetUserPath);
                 PathComponents pathComponents = pathParserService.parsePath(targetPathWithoutPrefix);
 
                 return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);
@@ -69,7 +65,7 @@ public class ResourceMoveService {
                 } catch (Exception ignored) {
                 }
 
-                String targetPathWithoutPrefix = userPathService.removeUserPrefix(userId, targetBasePath);
+                String targetPathWithoutPrefix = userContextService.removeUserPrefix(targetBasePath);
                 PathComponents pathComponents = pathParserService.parsePath(targetPathWithoutPrefix);
 
                 return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);

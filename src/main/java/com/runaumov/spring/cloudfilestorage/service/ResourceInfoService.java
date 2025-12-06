@@ -13,17 +13,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ResourceInfoService {
     private final MinioStorageService minioStorageService;
-    private final AuthenticationService authenticationService;
-    private final UserPathService userPathService;
     private final PathParserService pathParserService;
+    private final UserContextService userContextService;
 
     public ResourceResponseDto getResourceInfo(String path) {
 
-        Long userId = authenticationService.getCurrentUserId();
-        String userPath = userPathService.addUserPrefix(userId, path);
+        String userPath = userContextService.addUserPrefix(path);
 
         if (pathParserService.isDirectory(userPath)) {
-            if (!userPath.equals(userPathService.getUserPrefix(userId))) {
+            if (!userContextService.isUserRoot(userPath)) {
                 MinioValidator.verificationDirectory(
                         userPath,
                         () -> minioStorageService.getStatObject(userPath),
@@ -32,7 +30,7 @@ public class ResourceInfoService {
                 );
             }
 
-            String pathWithoutPrefix = userPathService.removeUserPrefix(userId, userPath);
+            String pathWithoutPrefix = userContextService.removeUserPrefix(userPath);
             PathComponents pathComponents = pathParserService.parsePath(pathWithoutPrefix);
             return ResourceResponseDtoFactory.createDtoFromPathComponents(pathComponents);
         } else {
@@ -40,7 +38,7 @@ public class ResourceInfoService {
                     () -> minioStorageService.getStatObject(userPath),
                     "File not found: " + path
             );
-            String pathWithoutPrefix = userPathService.removeUserPrefix(userId, userPath);
+            String pathWithoutPrefix = userContextService.removeUserPrefix(userPath);
             PathComponents pathComponents = pathParserService.parsePath(pathWithoutPrefix);
 
             return ResourceResponseDtoFactory.createDtoFromStatObject(statObject, pathComponents);

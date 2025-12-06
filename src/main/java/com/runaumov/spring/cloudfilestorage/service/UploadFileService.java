@@ -18,15 +18,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UploadFileService {
     private final MinioStorageService minioStorageService;
-    private final AuthenticationService authenticationService;
-    private final UserPathService userPathService;
     private final PathParserService pathParserService;
+    private final UserContextService userContextService;
 
     public List<ResourceResponseDto> uploadFiles(String path, List<MultipartFile> files) {
-        Long userId = authenticationService.getCurrentUserId();
-        String userPath = userPathService.addUserPrefix(userId, path);
+        String userPath = userContextService.addUserPrefix(path);
 
-        if (!userPath.equals(userPathService.getUserPrefix(userId))) {
+        if (!userContextService.isUserRoot(userPath)) {
             MinioValidator.verificationDirectory(
                     userPath,
                     () -> minioStorageService.getStatObject(userPath),
@@ -50,17 +48,17 @@ public class UploadFileService {
                 throw new ResourceAlreadyExistsException("File already exists: " + path);
             }
 
-            ResourceResponseDto dto = uploadFile(file, targetUserPath, userId);
+            ResourceResponseDto dto = uploadFile(file, targetUserPath);
             uploadFiles.add(dto);
         }
         return uploadFiles;
     }
 
-    private ResourceResponseDto uploadFile(MultipartFile file, String path, Long userId) {
+    private ResourceResponseDto uploadFile(MultipartFile file, String path) {
         return MinioUtils.handleMinioException(() -> {
             minioStorageService.putObject(path, file);
 
-            String pathWithoutPrefix = userPathService.removeUserPrefix(userId, path);
+            String pathWithoutPrefix = userContextService.removeUserPrefix(path);
             PathComponents pathComponents = pathParserService.parsePath(pathWithoutPrefix);
 
             StatObjectResponse statObjectResponse = minioStorageService.getStatObject(path);

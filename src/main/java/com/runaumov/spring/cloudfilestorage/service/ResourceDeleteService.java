@@ -9,17 +9,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ResourceDeleteService {
     private final MinioStorageService minioStorageService;
-    private final AuthenticationService authenticationService;
-    private final UserPathService userPathService;
     private final PathParserService pathParserService;
+    private final UserContextService userContextService;
 
 
     public void deleteResource(String path) {
-        Long userId = authenticationService.getCurrentUserId();
-        String userPath = userPathService.addUserPrefix(userId, path);
+        String userPath = userContextService.addUserPrefix(path);
 
         if (pathParserService.isDirectory(userPath)) {
-            if (!userPath.equals(userPathService.getUserPrefix(userId))) {
+            if (!userContextService.isUserRoot(userPath)) {
                 MinioValidator.verificationDirectory(
                         userPath,
                         () -> minioStorageService.getStatObject(userPath),

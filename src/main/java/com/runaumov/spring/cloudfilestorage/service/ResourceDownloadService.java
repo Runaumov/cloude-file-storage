@@ -16,24 +16,22 @@ import java.util.zip.ZipOutputStream;
 public class ResourceDownloadService {
 
     private final MinioStorageService minioStorageService;
-    private final AuthenticationService authenticationService;
-    private final UserPathService userPathService;
     private final PathParserService pathParserService;
+    private final UserContextService userContextService;
 
     public byte[] resourceDownload(String path) {
 
-        Long userId = authenticationService.getCurrentUserId();
-        String userPath = userPathService.addUserPrefix(userId, path);
+        String userPath = userContextService.addUserPrefix(path);
 
         if (pathParserService.isDirectory(userPath)) {
-            if (!userPath.equals(userPathService.getUserPrefix(userId))) {
+            if (!userContextService.isUserRoot(userPath)) {
                 MinioValidator.verificationDirectory(
                         userPath,
                         () -> minioStorageService.getStatObject(userPath),
                         () -> minioStorageService.listDirectoryItems(userPath, false),
                         "Folder not found: " + path);
             }
-            return downloadDirectory(userPath, userId);
+            return downloadDirectory(userPath);
         } else {
             MinioUtils.handleMinioException(() -> minioStorageService.getStatObject(userPath), "File not found: " + path);
             return downloadFile(userPath);
@@ -48,13 +46,13 @@ public class ResourceDownloadService {
         }, "Failed to download file: " + path);
     }
 
-    private byte[] downloadDirectory(String path, Long userId) {
+    private byte[] downloadDirectory(String path) {
         return MinioUtils.handleMinioException(() -> {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
             try (ZipOutputStream zipOut = new ZipOutputStream(byteArrayOutputStream)) {
                 if (hasItems(path)) {
-                    addItemsToZip(path, zipOut, userId);
+                    addItemsToZip(path, zipOut);
                 } else {
                     addEmptyDirectoryMarker(zipOut);
                 }
@@ -68,15 +66,15 @@ public class ResourceDownloadService {
         return minioStorageService.listDirectoryItems(path, false).iterator().hasNext();
     }
 
-    private void addItemsToZip(String path, ZipOutputStream zipOut, Long userId) throws Exception {
+    private void addItemsToZip(String path, ZipOutputStream zipOut) throws Exception {
         Iterable<Result<Item>> items = minioStorageService.listDirectoryItems(path, true);
 
         for (Result<Item> result : items) {
             Item item = result.get();
             String objectName = item.objectName();
 
-            String pathWithoutPrefix = userPathService.removeUserPrefix(userId, objectName);
-            String relativePath = calculateRelativePath(userPathService.removeUserPrefix(userId, path), pathWithoutPrefix);
+            String pathWithoutPrefix = userContextService.removeUserPrefix(objectName);
+            String relativePath = calculateRelativePath(userContextService.removeUserPrefix(path), pathWithoutPrefix);
 
             if (pathParserService.isDirectory(objectName)) {
                 addDirectoryToZip(relativePath, zipOut);
