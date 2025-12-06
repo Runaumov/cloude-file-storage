@@ -23,8 +23,6 @@ public class DirectoryController {
 
     @GetMapping
     public ResponseEntity<List<ResourceResponseDto>> getDirectoryInfo(@RequestParam String path) {
-        System.out.println(">>> Request to /api/directory?path=" + path);
-        System.out.println(">>> SecurityContext: " + SecurityContextHolder.getContext().getAuthentication());
         return ResponseEntity.ok(directoryService.getDirectoryInfo(path));
     }
 

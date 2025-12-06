@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,11 +23,15 @@ public class AuthService {
     private final UserEntityMapper userEntityMapper;
     private final UserPathService userPathService;
     private final MinioStorageService minioStorageService;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public UserEntityResponseDto registerUser(UserEntityRequestDto dto) {
         try {
-            UserEntity savedUser = userRepository.save(userEntityMapper.toUserEntity(dto));
+            UserEntity user = userEntityMapper.toUserEntity(dto);
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+            UserEntity savedUser = userRepository.save(user);
             createUserRootFolder(savedUser.getId());
             return userEntityMapper.toUserEntityResponseDto(savedUser);
         } catch (DataIntegrityViolationException e) {

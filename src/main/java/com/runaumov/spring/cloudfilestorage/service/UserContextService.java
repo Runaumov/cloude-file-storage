@@ -14,7 +14,7 @@ public class UserContextService {
     }
 
     public String getUserPrefix() {
-        return userPathService.getUserPrefix(getCurrentUserId(););
+        return userPathService.getUserPrefix(getCurrentUserId());
     }
 
     public String addUserPrefix(String path) {
