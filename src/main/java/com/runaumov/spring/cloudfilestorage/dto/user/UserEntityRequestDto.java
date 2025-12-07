@@ -1,6 +1,5 @@
 package com.runaumov.spring.cloudfilestorage.dto.user;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

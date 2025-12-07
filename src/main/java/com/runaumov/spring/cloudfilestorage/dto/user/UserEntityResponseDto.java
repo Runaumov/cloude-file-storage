@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserEntityResponseDto { //TODO: реализовать валидацию
+public class UserEntityResponseDto {
 
     private String username;
 }

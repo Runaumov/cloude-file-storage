@@ -71,7 +71,6 @@ public class MinioStorageService {
         for (Result<Item> result : results) {
             deleteItemForPath(result.get().objectName());
         }
-        // TODO : грязный код, подумать, что можно сделать
         try {
             deleteItemForPath(path);
         } catch (Exception ignored) {}
@@ -103,57 +102,5 @@ public class MinioStorageService {
                         .maxKeys(1)
                         .build());
         return result.iterator().hasNext();
-    }
-
-    // TODO : переписать
-    public boolean isDirectory(String path) {
-        if (path.endsWith("/")) {
-            return true;
-        }
-
-        try {
-            minioClient.statObject(
-                    StatObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(path)
-                            .build()
-            );
-            return false;
-        } catch (ErrorResponseException e) {
-            if (!"NoSuchKey".equals(e.errorResponse().code())) {
-                throw new RuntimeException("Error checking object", e);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error checking object", e);
-        }
-
-        try {
-            minioClient.statObject(
-                    StatObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(path + "/")
-                            .build()
-            );
-            return true;
-        } catch (ErrorResponseException e) {
-            if (!"NoSuchKey".equals(e.errorResponse().code())) {
-                throw new RuntimeException("Error checking directory", e);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error checking directory", e);
-        }
-
-        try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(bucketName)
-                            .prefix(path + "/")
-                            .maxKeys(1)
-                            .build()
-            );
-            return results.iterator().hasNext();
-        } catch (Exception e) {
-            return false;
-        }
     }
 }
