@@ -1,7 +1,7 @@
 package com.runaumov.spring.cloudfilestorage.service.resource;
 
-import com.runaumov.spring.cloudfilestorage.service.storage.MinioStorageService;
-import com.runaumov.spring.cloudfilestorage.service.storage.PathParserService;
+import com.runaumov.spring.cloudfilestorage.service.auth.storage.MinioStorageService;
+import com.runaumov.spring.cloudfilestorage.service.auth.storage.PathParserService;
 import com.runaumov.spring.cloudfilestorage.service.user.UserContextService;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import com.runaumov.spring.cloudfilestorage.util.MinioValidator;

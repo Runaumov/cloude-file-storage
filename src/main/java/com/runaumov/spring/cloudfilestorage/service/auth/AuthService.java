@@ -6,7 +6,7 @@ import com.runaumov.spring.cloudfilestorage.mapper.entity.UserEntity;
 import com.runaumov.spring.cloudfilestorage.exception.UsernameAlreadyExistException;
 import com.runaumov.spring.cloudfilestorage.mapper.UserEntityMapper;
 import com.runaumov.spring.cloudfilestorage.repository.UserRepository;
-import com.runaumov.spring.cloudfilestorage.service.storage.MinioStorageService;
+import com.runaumov.spring.cloudfilestorage.service.auth.storage.MinioStorageService;
 import com.runaumov.spring.cloudfilestorage.service.user.UserPathService;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import lombok.RequiredArgsConstructor;

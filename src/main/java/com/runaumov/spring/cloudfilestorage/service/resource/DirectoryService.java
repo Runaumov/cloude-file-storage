@@ -5,8 +5,8 @@ import com.runaumov.spring.cloudfilestorage.dto.resource.ResourceResponseDto;
 import com.runaumov.spring.cloudfilestorage.dto.resource.ResourceResponseDtoFactory;
 import com.runaumov.spring.cloudfilestorage.exception.ResourceAlreadyExistsException;
 import com.runaumov.spring.cloudfilestorage.exception.ResourceNotFoundException;
-import com.runaumov.spring.cloudfilestorage.service.storage.MinioStorageService;
-import com.runaumov.spring.cloudfilestorage.service.storage.PathParserService;
+import com.runaumov.spring.cloudfilestorage.service.auth.storage.MinioStorageService;
+import com.runaumov.spring.cloudfilestorage.service.auth.storage.PathParserService;
 import com.runaumov.spring.cloudfilestorage.service.user.UserContextService;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import com.runaumov.spring.cloudfilestorage.util.MinioValidator;
@@ -43,6 +43,11 @@ public class DirectoryService {
         for (Result<Item> result : results) {
             Item item = MinioUtils.handleMinioException(result::get, "Failed to read directory item: " + path);
             String itemPath = userContextService.removeUserPrefix(item.objectName());
+
+            if (item.objectName().equals(userPath)) {
+                continue;
+            }
+
             PathComponents itemPathComponents = pathParserService.parsePath(itemPath);
             ResourceResponseDto resourceResponseDto = ResourceResponseDtoFactory.createDtoFromItemAndPathComponents(item, itemPathComponents);
             resources.add(resourceResponseDto);

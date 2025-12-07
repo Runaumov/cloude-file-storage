@@ -1,4 +1,4 @@
-package com.runaumov.spring.cloudfilestorage.service.storage;
+package com.runaumov.spring.cloudfilestorage.service.auth.storage;
 
 import io.minio.*;
 import io.minio.errors.*;

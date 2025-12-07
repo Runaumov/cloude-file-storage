@@ -1,4 +1,4 @@
-package com.runaumov.spring.cloudfilestorage.service.storage;
+package com.runaumov.spring.cloudfilestorage.service.auth.storage;
 
 import com.runaumov.spring.cloudfilestorage.dto.path.PathComponents;
 import org.springframework.stereotype.Service;
