@@ -3,7 +3,7 @@
 ## Краткое описание
 - Многопользовательское файловое облако. Пользователи сервиса могут использовать его для загрузки и хранения файлов.
 - Бэкенд представляет собой REST API.
-- Фронтенд взят [отсюда.]([https://github.com/zhukovsd/cloud-storage-frontend/])
+- Фронтенд взят [отсюда.([https://github.com/zhukovsd/cloud-storage-frontend/])]
 - Внедрен Swagger, доступный по адресу (при локальном запуске): http://localhost:8080/swagger-ui/index.html
 - Техническое задание проекта находится [тут.]([https://zhukovsd.github.io/java-backend-learning-course/projects/currency-exchange/](https://zhukovsd.github.io/java-backend-learning-course/projects/weather-viewer/))
 
