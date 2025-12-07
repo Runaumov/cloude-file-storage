@@ -1,7 +1,9 @@
 HELP.md
+questions.md
 .gradle
 build/
 logs/
+*.log
 .gitattributes
 .gitignore
 !gradle/wrapper/gradle-wrapper.jar
@@ -38,3 +40,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Gradle ###
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
