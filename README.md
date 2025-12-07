@@ -38,7 +38,6 @@
 
 ## Запуск приложения
 Собрать и запустить docker-compose
-    
-    ```
-    docker-compose up --build
-    ```
+```
+docker-compose up --build
+```
