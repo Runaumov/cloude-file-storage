@@ -32,7 +32,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.session:spring-session-data-redis'
-    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
     implementation("io.minio:minio:8.5.17")
     implementation 'org.apache.commons:commons-lang3:3.18.0'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
@@ -43,7 +42,6 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     implementation 'org.liquibase:liquibase-core:5.0.1'
     runtimeOnly 'org.postgresql:postgresql:42.7.8'
-    runtimeOnly 'com.h2database:h2'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'

@@ -2,7 +2,7 @@ package com.runaumov.spring.cloudfilestorage;
 
 import com.runaumov.spring.cloudfilestorage.dto.user.UserEntityRequestDto;
 import com.runaumov.spring.cloudfilestorage.dto.user.UserSessionDto;
-import com.runaumov.spring.cloudfilestorage.service.auth.AuthService;
+import com.runaumov.spring.cloudfilestorage.service.auth.RegistrationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +50,7 @@ public class AuthUserTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private AuthService authService;
+    private RegistrationService registrationService;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -92,7 +92,7 @@ public class AuthUserTest {
     void shouldReturn409_whenUsernameAlreadyExists() throws Exception {
         String json = "{\"username\":\"testuser\",\"password\":\"password\"}";
 
-        authService.registerUser(new UserEntityRequestDto("testuser", "password"));
+        registrationService.registerUser(new UserEntityRequestDto("testuser", "password"));
 
         mockMvc.perform(post("/api/auth/sign-up").contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isConflict());

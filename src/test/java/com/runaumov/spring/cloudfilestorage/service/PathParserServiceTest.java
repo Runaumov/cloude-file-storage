@@ -1,7 +1,7 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
 import com.runaumov.spring.cloudfilestorage.dto.path.PathComponents;
-import com.runaumov.spring.cloudfilestorage.service.auth.storage.PathParserService;
+import com.runaumov.spring.cloudfilestorage.service.storage.PathParserService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

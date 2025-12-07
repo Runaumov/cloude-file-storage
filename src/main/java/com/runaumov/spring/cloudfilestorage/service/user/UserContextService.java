@@ -1,17 +1,17 @@
 package com.runaumov.spring.cloudfilestorage.service.user;
 
-import com.runaumov.spring.cloudfilestorage.service.auth.AuthenticationService;
+import com.runaumov.spring.cloudfilestorage.service.auth.AuthenticationContextService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class UserContextService {
-    private final AuthenticationService authenticationService;
+    private final AuthenticationContextService authenticationContextService;
     private final UserPathService userPathService;
 
     public Long getCurrentUserId() {
-        return authenticationService.getCurrentUserId();
+        return authenticationContextService.getCurrentUserId();
     }
 
     public String getUserPrefix() {
