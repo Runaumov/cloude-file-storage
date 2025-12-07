@@ -1,8 +1,8 @@
 package com.runaumov.spring.cloudfilestorage.mapper;
 
-import com.runaumov.spring.cloudfilestorage.dto.UserEntityRequestDto;
-import com.runaumov.spring.cloudfilestorage.dto.UserEntityResponseDto;
-import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
+import com.runaumov.spring.cloudfilestorage.dto.user.UserEntityRequestDto;
+import com.runaumov.spring.cloudfilestorage.dto.user.UserEntityResponseDto;
+import com.runaumov.spring.cloudfilestorage.mapper.entity.UserEntity;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

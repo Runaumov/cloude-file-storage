@@ -1,6 +1,6 @@
 package com.runaumov.spring.cloudfilestorage.security;
 
-import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
+import com.runaumov.spring.cloudfilestorage.mapper.entity.UserEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;

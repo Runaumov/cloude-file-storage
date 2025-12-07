@@ -2,14 +2,12 @@ package com.runaumov.spring.cloudfilestorage.config.filter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.runaumov.spring.cloudfilestorage.dto.UserSessionDto;
-import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
+import com.runaumov.spring.cloudfilestorage.dto.user.UserSessionDto;
 import com.runaumov.spring.cloudfilestorage.security.UserEntityDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;

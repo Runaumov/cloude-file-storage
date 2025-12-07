@@ -1,6 +1,6 @@
 package com.runaumov.spring.cloudfilestorage.repository;
 
-import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
+import com.runaumov.spring.cloudfilestorage.mapper.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

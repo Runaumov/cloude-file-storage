@@ -1,6 +1,7 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
-import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
+import com.runaumov.spring.cloudfilestorage.dto.resource.ResourceResponseDto;
+import com.runaumov.spring.cloudfilestorage.service.resource.ResourceMoveService;
 import io.minio.PutObjectArgs;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

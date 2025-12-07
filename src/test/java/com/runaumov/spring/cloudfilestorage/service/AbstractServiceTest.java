@@ -1,10 +1,12 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
+import com.runaumov.spring.cloudfilestorage.service.user.UserContextService;
+import io.minio.*;
+import io.minio.messages.Item;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MinIOContainer;
@@ -44,7 +46,6 @@ public abstract class AbstractServiceTest {
         if (!isBucketExist) {
             minioClient.makeBucket(MakeBucketArgs.builder().bucket(TEST_BUCKET).build());
         }
-
         setupUserContextMocks();
     }
 

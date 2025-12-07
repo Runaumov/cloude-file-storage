@@ -1,22 +1,18 @@
 package com.runaumov.spring.cloudfilestorage.service;
 
-import com.runaumov.spring.cloudfilestorage.dto.ResourceResponseDto;
+import com.runaumov.spring.cloudfilestorage.dto.resource.ResourceResponseDto;
+import com.runaumov.spring.cloudfilestorage.service.resource.DirectoryService;
 import io.minio.GetObjectArgs;
 import io.minio.PutObjectArgs;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
-
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test-service")

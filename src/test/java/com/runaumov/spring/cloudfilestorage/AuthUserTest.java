@@ -1,11 +1,8 @@
 package com.runaumov.spring.cloudfilestorage;
 
-import com.runaumov.spring.cloudfilestorage.dto.UserEntityRequestDto;
-import com.runaumov.spring.cloudfilestorage.dto.UserSessionDto;
-import com.runaumov.spring.cloudfilestorage.entity.UserEntity;
-import com.runaumov.spring.cloudfilestorage.repository.UserRepository;
-import com.runaumov.spring.cloudfilestorage.security.UserEntityDetails;
-import com.runaumov.spring.cloudfilestorage.service.AuthService;
+import com.runaumov.spring.cloudfilestorage.dto.user.UserEntityRequestDto;
+import com.runaumov.spring.cloudfilestorage.dto.user.UserSessionDto;
+import com.runaumov.spring.cloudfilestorage.service.auth.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,15 +10,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.mock.web.MockCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
