@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres
+    container_name: cloudfilestorage-postgres
+    environment:
+      POSTGRES_DB: cloudfilestorage
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis
+    container_name: cloudfilestorage-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: cloudfilestorage-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: miniopassword
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cloudfilestorage-app
+    environment:
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cloudfilestorage
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+
+      MINIO_URL: http://minio:9000
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: miniopassword
+      MINIO_BUCKET: user-files
+
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_LEVEL_ROOT: INFO
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    restart: on-failure
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:

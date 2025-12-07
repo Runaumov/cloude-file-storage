@@ -48,6 +48,8 @@ public class SecurityConfig {
         JsonAuthenticationFilter jsonAuthenticationFilter =
                 new JsonAuthenticationFilter(requestMatcher, authenticationManager);
 
+
+
         httpSecurity
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth

@@ -11,6 +11,10 @@ import com.runaumov.spring.cloudfilestorage.service.user.UserPathService;
 import com.runaumov.spring.cloudfilestorage.util.MinioUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +34,6 @@ public class RegistrationService {
         try {
             UserEntity user = userEntityMapper.toUserEntity(dto);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
-
             UserEntity savedUser = userRepository.save(user);
             createUserRootFolder(savedUser.getId());
             return userEntityMapper.toUserEntityResponseDto(savedUser);
@@ -57,7 +60,8 @@ public class RegistrationService {
         String userPrefix = userPathService.getUserPrefix(userId);
 
         MinioUtils.handleMinioException(() -> {
-            minioStorageService.putEmptyItem(userPrefix); return null;
+            minioStorageService.putEmptyItem(userPrefix);
+            return null;
             }, "Failed to create user root folder");
     }
 }
